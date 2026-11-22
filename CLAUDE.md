@@ -1,0 +1,40 @@
+# CLAUDE.md: unset-sh/web
+
+## Where this repository fits
+
+This is `unset-sh/web`: Unset's complete SvelteKit web application and device-side integrations.
+
+- **Belongs here:** routes, SSR, screens, components, interactions, web sessions, client capability interfaces,
+  backend/device adapters, messaging UI, web tests and producer image builds.
+- **Does not belong here:** authoritative server operations, private data adapters or migrations
+  (`unset-sh/backend`); environment topology (`unset-sh/deployment`); canonical brand values (`unset-sh/brand`),
+  protocol schemas (`unset-sh/lexicons`) or shared automation (`unset-sh/tooling`).
+- **Uses:** planned supported backend APIs and pinned brand/lexicon artifacts, tooling and agent-kit; presentation
+  where its rendering responsibility is needed. No dependencies are installed yet. **Used by:** web users and
+  deployment's artifact selection.
+- **Licence:** AGPL-3.0-only first-party work; no outside code contributions for now. Third-party licences remain.
+
+Read the [organisation map](https://github.com/unset-sh/.github/blob/main/MAP.md) before moving responsibility.
+When responsibility, dependencies or outputs change, update `unset-sh/.github`'s `repos.json`, regenerate its
+map with `npm run map`, and update this section in the same piece of work.
+
+## Rules
+
+- This is a foundation, not a migrated application. The original `Undefined6799/unset` remains read-only for
+  this work. Do not infer permission to copy code or relax existing security boundaries.
+- Keep the complete SvelteKit app here. Organize meaningful features together; routes decode web requests and
+  present results. Backend owns authoritative operations. Browser and SSR code never import its private adapters.
+- Keep screens independent of provider SDKs through purposeful capability interfaces. Place concrete adapters
+  on the server or device according to runtime and trust requirements; do not force every integration into backend.
+- Preserve messaging origin, session and key isolation unless explicitly replaced by a reviewed decision.
+  A single source repository does not require a single deployment origin. Device encryption keys stay on-device.
+- Consume public brand artifacts instead of maintaining token copies. Validate untrusted runtime inputs; static
+  types do not replace validation or backend authorization. Add meaningful browser/server import checks with code.
+- Own web image builds and configuration/health contracts; deployment owns selected releases and environment wiring.
+- Human guides belong under `docs/` when needed. AI working notes and artifacts belong in agent-kit. Do not claim
+  installed shared rules, automated adoption or release enforcement before they have been configured and verified.
+
+## Commands
+
+No package manifest, application commands, check commands, CI or agent-kit copy exists yet. Add real commands
+and checks with the first implementation; there is no bootstrap application to install or run.
