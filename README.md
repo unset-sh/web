@@ -47,7 +47,7 @@ replacement before implementation. Do not send device keys to the backend to sim
   versions. Do not maintain copies of shared brand values. Web owns interactions and accessible components.
 - Consume supported [backend](https://github.com/unset-sh/backend) APIs and authoritative
   [lexicons](https://github.com/unset-sh/lexicons) artifacts when published; do not import server internals.
-- Use [presentation](https://github.com/unset-sh/presentation) for its supported rendering responsibility
+- Use [rendering](https://github.com/unset-sh/rendering) for its supported rendering responsibility
   when needed, without duplicating templates or assuming its implementation is browser-compatible.
 - Use [tooling](https://github.com/unset-sh/tooling) for reusable CI mechanisms and
   [agent-kit](https://github.com/unset-sh/agent-kit) for shared agent instructions after explicit adoption.

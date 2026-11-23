@@ -9,7 +9,7 @@ This is `unset-sh/web`: Unset's complete SvelteKit web application and device-si
 - **Does not belong here:** authoritative server operations, private data adapters or migrations
   (`unset-sh/backend`); environment topology (`unset-sh/deployment`); canonical brand values (`unset-sh/brand`),
   protocol schemas (`unset-sh/lexicons`) or shared automation (`unset-sh/tooling`).
-- **Uses:** planned supported backend APIs and pinned brand/lexicon artifacts, tooling and agent-kit; presentation
+- **Uses:** planned supported backend APIs and pinned brand/lexicon artifacts, tooling and agent-kit; rendering
   where its rendering responsibility is needed. No dependencies are installed yet. **Used by:** web users and
   deployment's artifact selection.
 - **Licence:** AGPL-3.0-only first-party work; no outside code contributions for now. Third-party licences remain.
