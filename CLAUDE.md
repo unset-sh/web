@@ -23,7 +23,8 @@ map with `npm run map`, and update this section in the same piece of work.
 - The original `Undefined6799/unset` stays read-only. Alex, 2026-11-23: reuse its code wherever it fits rather
   than reinvent it ("the idea is to reuse as much code as possible while doing that migration"). Copy the
   files and tests a change needs, change only what the move requires in a separate commit, cite the source
-  path and commit, and note weak spots in agent-kit. Never copy a security weakness or relax an existing security boundary.
+  path and commit, and note weak spots in agent-kit. Never copy a security weakness or relax an existing
+  security boundary.
 - Keep the complete SvelteKit app here. Organize meaningful features together; routes decode web requests and
   present results. Backend owns authoritative operations. Browser and SSR code never import its private adapters.
 - Keep screens independent of provider SDKs through purposeful capability interfaces. Place concrete adapters
