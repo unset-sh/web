@@ -8,5 +8,5 @@ permissions: {}
 
 jobs:
   policy:
-    uses: unset-sh/tooling/.github/workflows/ci-branch-policy.yml@5f47dbe68fc8c8860e99eccd1edc882aba65bf63
+    uses: unset-sh/tooling/.github/workflows/ci-branch-policy.yml@33817bbf23fd4a4e2f6bf99d1f958847364b4549
     permissions: {}
