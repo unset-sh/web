@@ -1,0 +1,12 @@
+name: branch-policy
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, edited, ready_for_review]
+
+permissions: {}
+
+jobs:
+  policy:
+    uses: unset-sh/tooling/.github/workflows/ci-branch-policy.yml@5f47dbe68fc8c8860e99eccd1edc882aba65bf63
+    permissions: {}
