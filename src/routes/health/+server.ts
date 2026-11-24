@@ -1,5 +1,7 @@
-// `/health`: the container probe reads it. 200 with no body once the server answers; the readiness of what web
-// depends on joins it with the backend adapter.
-import type { RequestHandler } from "./$types";
+// `/health`: 200 with the service and commit when ready, 503 otherwise (shared/http/health.ts). The container probe
+// reads it, so server.ts skips the host check and the policy skips the rate limit.
 
-export const GET: RequestHandler = () => new Response(null, { status: 200, headers: { "cache-control": "no-store" } });
+import type { RequestHandler } from "@sveltejs/kit";
+import { services } from "../../lib/server/compose.ts";
+
+export const GET: RequestHandler = () => services().health.respond();
