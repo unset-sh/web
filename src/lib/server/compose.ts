@@ -1,6 +1,8 @@
 // The web process's composition root, cut down from the old app's compose.ts to what this step serves: the logger, the
-// rate limiter and health. A later step adds its own service here (the backend client next), with its readiness check
-// and its shutdown step. Built once by the `init` hook (hooks.server.ts), before server.ts listens.
+// rate limiter, health and the member's account over backend. A later step adds its own service here, with its
+// readiness check and its shutdown step. Built once by the `init` hook (hooks.server.ts), before server.ts listens.
+import type { Accounts } from "./accounts/index.ts";
+import { createBackendAccounts } from "./backend/accounts.ts";
 import { createHealth, createRateLimiter, type RateLimiter } from "./http/index.ts";
 import { policiesFor } from "./limits.ts";
 import { createLogger, type Logger } from "./log/index.ts";
@@ -13,6 +15,7 @@ export type Services = {
   readonly log: Logger;
   readonly limiter: RateLimiter;
   readonly health: ReturnType<typeof createHealth>;
+  readonly accounts: Accounts;
 };
 
 function build(): Services {
@@ -33,7 +36,9 @@ function build(): Services {
   health.setState("running");
   shutdown.draining.push(() => health.setState("draining"));
   shutdown.close.push(async () => clearInterval(sweeper));
-  return { log, limiter, health };
+  // Backend's own readiness is not web's: a page that needs it answers service.unavailable while it is down.
+  const accounts = createBackendAccounts({ url: config.BACKEND_URL });
+  return { log, limiter, health, accounts };
 }
 
 let built: Services | undefined;
