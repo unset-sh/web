@@ -34,6 +34,7 @@ the process with exit code 78 and names the setting, never its value.
 | `HTTP_BODY_LIMIT_BYTES` | no | The default body limit. Default 65536. |
 | `RATE_LIMIT_MAX_KEYS` | no | Rate-limit buckets held at once. Default 100000. |
 | `SEARCH_LISTING` | no | `off` (the default) puts `noindex` on every response. |
+| `BACKEND_URL` | yes | Backend's internal API as an origin, such as `http://backend:3000`, reached on the private network only. The browser never calls it. |
 
 ## What every request gets
 

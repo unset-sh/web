@@ -70,6 +70,8 @@ beforeAll(async () => {
       TRUSTED_PROXY_MODE: "header",
       TRUSTED_PROXY_HEADER: "x-forwarded-for",
       TRUSTED_PROXY_CIDRS: "127.0.0.1/32,::1/128",
+      // Nothing listens there: no gate test reaches backend.
+      BACKEND_URL: "http://127.0.0.1:9",
     },
   });
   web.stdout?.on("data", (chunk: Buffer) => {

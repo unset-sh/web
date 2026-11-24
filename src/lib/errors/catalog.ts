@@ -19,6 +19,24 @@ export const ERROR_CODES = {
   "internal.error": { status: 500, public: true },
   "service.unavailable": { status: 503, public: true },
   "config.invalid": { status: 500, public: false },
+  // Sign-in, sign-out and the profile (the old app's codes, shared/errors/catalog.ts at 60228f5).
+  "login.handle_invalid": { status: 400, public: true },
+  "login.handle_not_found": { status: 404, public: true },
+  "login.handle_unverified": { status: 400, public: true },
+  "login.identity_unavailable": { status: 503, public: true },
+  "login.pds_unreachable": { status: 503, public: true },
+  "login.failed": { status: 500, public: true },
+  "login.expired": { status: 400, public: true },
+  "login.state_mismatch": { status: 400, public: true },
+  "login.consent_denied": { status: 403, public: true },
+  "login.scope_insufficient": { status: 403, public: true },
+  "login.account_mismatch": { status: 403, public: true },
+  "login.session_ended": { status: 401, public: true },
+  "logout.failed": { status: 503, public: true },
+  "profile.invalid": { status: 400, public: true },
+  "profile.too_long": { status: 400, public: true },
+  "profile.conflict": { status: 409, public: true },
+  "profile.pds_unavailable": { status: 503, public: true },
 } as const satisfies Record<string, { status: Status; public: boolean }>;
 
 export type ErrorCode = keyof typeof ERROR_CODES;
