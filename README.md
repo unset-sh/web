@@ -2,10 +2,9 @@
 
 Unset's complete SvelteKit web application: routes, server rendering, screens and web-specific integrations.
 
-**Status: repository foundation only.** No SvelteKit application, dependencies, build, checks, image or
-deployment is present yet. The application move from
-[Undefined6799/unset](https://github.com/Undefined6799/unset) is pending; that repository remains read-only
-during this foundation work.
+**Status: foundation.** A SvelteKit 3 application on Bun with its checks and a health route. Screens, sign-in and
+the image arrive step by step, reusing code from [Undefined6799/unset](https://github.com/Undefined6799/unset),
+which stays read-only.
 
 ## Responsibility
 

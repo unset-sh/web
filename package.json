@@ -1,0 +1,31 @@
+{
+  "name": "@unset-sh/web",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Unset's complete SvelteKit web application.",
+  "license": "AGPL-3.0-only",
+  "type": "module",
+  "scripts": {
+    "dev": "vite dev",
+    "build": "vite build",
+    "start": "bun build/index.js",
+    "typecheck": "svelte-kit sync && svelte-check --tsgo --tsconfig ./tsconfig.json --threshold warning --fail-on-warnings",
+    "lint": "biome ci .",
+    "format": "biome format --write .",
+    "test": "bunx --bun vitest run",
+    "check": "bun run typecheck && bun run lint && bun run test && bun run build"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "2.5.15",
+    "@sveltejs/adapter-node": "6.0.2",
+    "@sveltejs/kit": "3.2.0",
+    "@sveltejs/vite-plugin-svelte": "7.3.1",
+    "@types/bun": "1.4.4",
+    "@typescript/native": "npm:typescript@7.0.2",
+    "svelte": "5.57.3",
+    "svelte-check": "4.7.8",
+    "typescript": "6.0.3",
+    "vite": "8.3.8",
+    "vitest": "5.1.0"
+  }
+}
