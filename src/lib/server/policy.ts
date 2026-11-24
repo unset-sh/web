@@ -20,6 +20,11 @@ export type RoutePolicy = Readonly<{
   maxBody?: number;
   /** This route's own deadline; otherwise REQUEST_DEADLINE_MS. */
   deadlineMs?: number;
+  /**
+   * Whether the route reads the member's session (one call to backend). `required`: a visitor goes to /login.
+   * `optional`: anyone may see the page, and a member sees it as signed in. Absent: no session is read.
+   */
+  session?: "required" | "optional";
   /** /health only: no host check and no rate limit, so the container probe always reaches it. */
   probe?: true;
 }>;

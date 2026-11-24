@@ -3,11 +3,11 @@
 // and the body cap (adapter-node BODY_SIZE_LIMIT, set by server.ts). server.ts does what every response needs, files
 // and SvelteKit's early refusals included: the host check, the base headers, the log line and the drain. This hook
 // adds, in order: the route's policy (none = refused), form-only bodies, the body size, the client address and its
-// limit, then the route under its deadline, and last the response's CSP: SvelteKit's own, narrowed, on an app page;
-// the group's fixed one on everything else. Every check fails closed. Kit docs: https://svelte.dev/docs/kit/hooks
-// (3.2.0). The session part of the old gate comes with sign-in.
+// limit, then under the route's deadline the session and the member's limit, the route, and last the response's CSP:
+// SvelteKit's own, narrowed, on an app page; the group's fixed one on everything else. Every check fails closed. Kit
+// docs: https://svelte.dev/docs/kit/hooks (3.2.0).
 import { randomUUID } from "node:crypto";
-import { isRedirect, type RequestEvent } from "@sveltejs/kit";
+import { isRedirect, type RequestEvent, redirect } from "@sveltejs/kit";
 import type { Handle, HandleServerError, ServerInit } from "@sveltejs/kit/hooks";
 import { building, dev } from "$app/env";
 import { AppError, ERROR_CODES } from "./lib/errors/index.ts";
@@ -19,6 +19,7 @@ import type { PageGroup, RoutePolicy } from "./lib/server/policy.ts";
 import { refusalPage, wantsPage } from "./lib/server/refusal-page.ts";
 import { policyOf } from "./lib/server/route-table.ts";
 import { config, requestNote, stylesheet } from "./lib/server/runtime.ts";
+import { memberOf } from "./lib/server/sign-in/session.ts";
 
 /** Only these bodies are accepted. SvelteKit's Origin check covers exactly the form types, so refusing every other
  * type here puts every POST under that check. */
@@ -82,8 +83,34 @@ const gate: Handle = async ({ event, resolve }) => {
     ? undefined
     : limited(limitOf(event.request, policy), { ip: clientIpOf(event.request.headers, event.getClientAddress()) });
   if (byIp) return byIp;
-  return withDeadline(event, policy, () => resolve(event));
+  return withDeadline(
+    event,
+    policy,
+    async (deadline) => (await sessionProblem(event, policy, deadline)) ?? resolve(event),
+  );
 };
+
+/**
+ * The session part of the gate (the old app's `sessionProblem`): who is asking, where a visitor goes, and the
+ * member's own limit, so one member cannot spend a page's budget from many addresses. A route whose policy reads no
+ * session never calls backend, and its bytes never depend on the cookie.
+ */
+async function sessionProblem(
+  event: RequestEvent,
+  policy: RoutePolicy,
+  deadline: AbortSignal,
+): Promise<Response | undefined> {
+  if (policy.session === undefined) return undefined;
+  const member = await memberOf(event.request, event.cookies, deadline);
+  if (member === undefined) {
+    // SvelteKit's redirect keeps the cookie changes (a cleared stale cookie) and answers a client-side navigation in
+    // the form its client expects (kit 3.2.0 src/runtime/server/respond.js).
+    if (policy.session === "required") redirect(303, "/login");
+    return undefined;
+  }
+  event.locals.member = member;
+  return limited(limitOf(event.request, policy), { did: member.did });
+}
 
 /** The route runs under its deadline; past it the visitor gets 503 and a late result is logged, never sent. */
 async function withDeadline(

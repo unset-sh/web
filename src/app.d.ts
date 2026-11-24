@@ -10,6 +10,8 @@ declare global {
       reqId: string;
       /** The route's deadline: loads and actions pass it to every call they make. */
       deadline: AbortSignal;
+      /** The signed-in member, on a route whose policy reads the session; absent for a visitor. */
+      member?: import("./lib/server/sign-in/session.ts").Member;
     }
   }
 }
