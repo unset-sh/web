@@ -55,3 +55,17 @@ limit. A route without one is refused.
 
 `/health` answers 200 with the service and commit while the server runs, and 503 once it is draining. SIGTERM stops
 new connections, lets requests in flight finish within the grace period, and exits 0.
+
+## Signing in
+
+Web holds no grant and no account data. It keeps three cookies, all `__Host-`, `Secure` and `HttpOnly`:
+
+- `__Host-sid`: the session token backend issued, sent to backend as a bearer header on every call for the member.
+- `__Host-oauth_nonce`: for ten minutes during a sign-in, the random value backend checks at the callback, so a
+  callback another browser started is refused.
+- `__Host-login_target`: for two minutes, where `/login/continue` sends the browser next. It is `SameSite=Strict`,
+  so only our own sign-in form leads there.
+
+`/login` takes a handle and sends the browser to that account's server, which sends it back to `/auth/callback`.
+`/profile` needs a session; without one it sends the visitor to `/login`. `POST /logout` ends this browser's session
+only, and the account's other browsers stay signed in.

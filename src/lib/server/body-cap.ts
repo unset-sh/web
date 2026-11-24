@@ -4,9 +4,7 @@
 // none, and SvelteKit stops reading past the declared length (kit 3.2.0 src/exports/node/index.js get_raw_body), so no
 // route reads more than its own maxBody. The largest route is named here by a literal import, as the old app's
 // body-cap.ts does; body-cap.test.ts reads every policy.ts and fails if another route takes more.
-//
-// No route takes a body yet, so the cap is one byte: never 0, which adapter-node would not read as "none". The step
-// that adds the first route with a body imports its policy here.
+import { policy as profile } from "../../routes/profile/policy.ts";
 
-/** The largest maxBody of any route; 1 while none takes a body. */
-export const BODY_CAP: number = 1;
+/** The largest maxBody of any route: the profile form's. */
+export const BODY_CAP: number = profile.maxBody ?? 1;

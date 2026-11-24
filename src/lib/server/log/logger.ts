@@ -71,6 +71,8 @@ const EVENTS = [
   "pds.scope_missing",
   // P2.08, signing out of this browser: a count with no DID.
   "auth.logout_this_browser",
+  // A sign-in replaced this browser's earlier session, and ending that one failed: it stays until it expires. No field.
+  "auth.replaced_session_kept",
   // P2.08j, signing out of every browser: a count with no DID, and the case where the grant was ended but the
   // sessions could not be (`kind` is the error class): rows remain that a later sign-in would make valid again.
   "auth.logout_everywhere",

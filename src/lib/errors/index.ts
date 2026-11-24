@@ -2,5 +2,5 @@
 // code goes into or comes out of a URL.
 export { AppError } from "./AppError.ts";
 export { ERROR_CODES, type ErrorCode, isErrorCode } from "./catalog.ts";
-export { ERROR_MESSAGES } from "./messages.ts";
+export { ERROR_MESSAGES, messageOf } from "./messages.ts";
 export { readErrorParam, withErrorParam } from "./redirect.ts";
