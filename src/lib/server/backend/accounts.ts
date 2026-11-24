@@ -71,9 +71,29 @@ async function call<T>(run: () => Promise<T>): Promise<T> {
   }
 }
 
-export function createBackendAccounts(options: { readonly url: string; readonly fetcher?: typeof fetch }): Accounts {
+/** PEM text for mutual TLS with backend: web's client certificate and key, and the CA that signed backend's. */
+export type BackendTls = { readonly cert: string; readonly key: string; readonly ca: string };
+
+/**
+ * `fetch` that shows web's certificate and trusts only `tls.ca` for backend's (Bun 1.4.4 `fetch` option `tls`,
+ * bun-types globals.d.ts `BunFetchRequestInitTLS`: `ca` replaces the public CAs, and the host name is checked
+ * against backend's certificate as usual).
+ */
+export function mutualTlsFetch(tls: BackendTls, base: typeof fetch = fetch): typeof fetch {
+  const withTls = (input: RequestInfo | URL, init?: BunFetchRequestInit) =>
+    base(input, { ...init, tls: { cert: tls.cert, key: tls.key, ca: tls.ca } });
+  return Object.assign(withTls, { preconnect: base.preconnect });
+}
+
+export function createBackendAccounts(options: {
+  readonly url: string;
+  readonly tls?: BackendTls;
+  readonly fetcher?: typeof fetch;
+}): Accounts {
+  const base = options.fetcher ?? fetch;
+  const fetcher = options.tls === undefined ? base : mutualTlsFetch(options.tls, base);
   const api = treaty<App>(options.url, {
-    ...(options.fetcher ? { fetcher: options.fetcher } : {}),
+    fetcher,
     // Eden turns any string that looks like a date into a Date, a display name included, unless told not to.
     parseDate: false,
   });
