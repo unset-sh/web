@@ -12,7 +12,8 @@
       "!bun.lock",
       "!src/lib/components/ui/**/*.svelte",
       "!src/lib/components/ui/**/index.ts",
-      "!src/lib/utils.ts"
+      "!src/lib/utils.ts",
+      "!src/lib/server/backend/app.d.ts"
     ]
   },
   "formatter": {

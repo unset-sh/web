@@ -28,6 +28,7 @@
   },
   "devDependencies": {
     "@biomejs/biome": "2.5.15",
+    "@elysia/eden": "1.4.10",
     "@sveltejs/adapter-node": "6.0.2",
     "@sveltejs/kit": "3.2.0",
     "@sveltejs/vite-plugin-svelte": "7.3.1",
@@ -37,6 +38,7 @@
     "@unset-sh/brand": "0.1.1",
     "bits-ui": "2.20.6",
     "cn": "0.5.0",
+    "elysia": "1.4.32",
     "fast-check": "4.10.2",
     "svelte": "5.57.3",
     "svelte-check": "4.7.8",
