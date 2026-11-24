@@ -1,0 +1,24 @@
+name: staging image
+
+# Each merge into staging builds the Dockerfile, pushes the image by digest to ghcr.io/unset-sh/staging/web and attests
+# its provenance, through tooling's shared workflow (docs/build-staging-images.md there). Deployment pins the digest and
+# verifies the attestation. Alex decided the workflow and its permissions on 2026-11-23, and the opt-in package read
+# on 2026-11-24: the build installs @unset-sh/brand from GitHub Packages with the run's own token, handed to the
+# Dockerfile only as the BuildKit secret github_packages_token.
+
+on:
+  push:
+    branches: [staging]
+
+permissions: {}
+
+jobs:
+  image:
+    uses: unset-sh/tooling/.github/workflows/image-staging.yml@cbc5f3a34a95c5a0070d12cb97ff9854ec2f5da3 # main, 2026-11-24, unreleased 0.0.0
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
+      attestations: write
+    with:
+      read-packages: true
