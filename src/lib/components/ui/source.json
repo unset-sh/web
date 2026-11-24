@@ -1,0 +1,161 @@
+{
+  "source": "unset-sh/brand",
+  "tag": "v0.1.1",
+  "commit": "8c998a2990ae477daf5ac1636028f6cbf379577b",
+  "upstream": {
+    "repository": "https://github.com/huntabyte/shadcn-svelte",
+    "commit": "c3b21a62055c7d7b97a220eb5a9efb4d1b7fc8fc",
+    "licence": "MIT"
+  },
+  "rewrites": {
+    "$lib/registry/ui/": "#lib/components/ui/",
+    "$lib/utils.js": "#lib/utils.js"
+  },
+  "files": [
+    {
+      "path": "src/lib/components/ui/UPSTREAM-LICENSE.md",
+      "from": "site/gallery/UPSTREAM-LICENSE.md",
+      "sha256": "230594c9dedb06fb0759381a520b449c1b47b0f63b95fc88ef9d7e851e2540a9"
+    },
+    {
+      "path": "src/lib/components/ui/button/button.svelte",
+      "from": "site/gallery/src/lib/registry/ui/button/button.svelte",
+      "sha256": "836d6b14108ce6f20ed88c6500d981c412e1d9cc8bbde02c2f64552b1c0b195c"
+    },
+    {
+      "path": "src/lib/components/ui/button/index.ts",
+      "from": "site/gallery/src/lib/registry/ui/button/index.ts",
+      "sha256": "0f6b6f040d92b4153821d3f9b4d6b9cbc567247e4fda913e64c1d0fcc4a2f386"
+    },
+    {
+      "path": "src/lib/components/ui/card/card-action.svelte",
+      "from": "site/gallery/src/lib/registry/ui/card/card-action.svelte",
+      "sha256": "032220a0e351eac68b77e4cedf938597376703f1a95648a615306b0a648d2851"
+    },
+    {
+      "path": "src/lib/components/ui/card/card-content.svelte",
+      "from": "site/gallery/src/lib/registry/ui/card/card-content.svelte",
+      "sha256": "1fc6e4e49eb6cd16ce76e66d1015fe72503a8538bc8e602326a3f5130ffd8a33"
+    },
+    {
+      "path": "src/lib/components/ui/card/card-description.svelte",
+      "from": "site/gallery/src/lib/registry/ui/card/card-description.svelte",
+      "sha256": "c51e61a11c7b87e3da6b06eb953e7bfffe0388f7721795bfc207c8bea0aabbd3"
+    },
+    {
+      "path": "src/lib/components/ui/card/card-footer.svelte",
+      "from": "site/gallery/src/lib/registry/ui/card/card-footer.svelte",
+      "sha256": "9242ce73ae1fdf89f2dc30c42302e928ae6bf1dfecd18df1c08e1958afb71161"
+    },
+    {
+      "path": "src/lib/components/ui/card/card-header.svelte",
+      "from": "site/gallery/src/lib/registry/ui/card/card-header.svelte",
+      "sha256": "5c15cab4b41f19e406b86a46d767dc7d38936c5870a64707a633f515f59a5215"
+    },
+    {
+      "path": "src/lib/components/ui/card/card-title.svelte",
+      "from": "site/gallery/src/lib/registry/ui/card/card-title.svelte",
+      "sha256": "5deb7cebbb6cb224a4dd62dcf61468ee39094497df2b186210d7e1a36096ac02"
+    },
+    {
+      "path": "src/lib/components/ui/card/card.svelte",
+      "from": "site/gallery/src/lib/registry/ui/card/card.svelte",
+      "sha256": "263baa411cacfe098ba631ff8696aa02a9134ff40094b56caaf4800de7bfad0b"
+    },
+    {
+      "path": "src/lib/components/ui/card/index.ts",
+      "from": "site/gallery/src/lib/registry/ui/card/index.ts",
+      "sha256": "41b4e0bf782f5e2bbed1863de169ad9f623b47a73f9fc57ba6776779e4be9edb"
+    },
+    {
+      "path": "src/lib/components/ui/field/field-content.svelte",
+      "from": "site/gallery/src/lib/registry/ui/field/field-content.svelte",
+      "sha256": "340d9cceb0e4ed43b24dd4bb4e29492e49975b750711baf119d13a26e7dcda6f"
+    },
+    {
+      "path": "src/lib/components/ui/field/field-description.svelte",
+      "from": "site/gallery/src/lib/registry/ui/field/field-description.svelte",
+      "sha256": "08e9666ecf336a78dc07f745237e5d084a43d0994a9ccac4f0e5ec4ec62e6c17"
+    },
+    {
+      "path": "src/lib/components/ui/field/field-error.svelte",
+      "from": "site/gallery/src/lib/registry/ui/field/field-error.svelte",
+      "sha256": "427bde3419c1204fd2b64173ed6c4658860c47b97ba37d30bb2f82fc56a39651"
+    },
+    {
+      "path": "src/lib/components/ui/field/field-group.svelte",
+      "from": "site/gallery/src/lib/registry/ui/field/field-group.svelte",
+      "sha256": "5e21006bd999d94e31e859c1ee19f1000fa414658de80b84926c3f9c24651a2f"
+    },
+    {
+      "path": "src/lib/components/ui/field/field-label.svelte",
+      "from": "site/gallery/src/lib/registry/ui/field/field-label.svelte",
+      "sha256": "efa1a4a38bddb7aa4ad24e0daef3f90b21da109dade9ce2b6d48b311c49714d1"
+    },
+    {
+      "path": "src/lib/components/ui/field/field-legend.svelte",
+      "from": "site/gallery/src/lib/registry/ui/field/field-legend.svelte",
+      "sha256": "d9ecf087687e65887901d858eb0b89543f2e21c6d202cb198205cb4449b31c6a"
+    },
+    {
+      "path": "src/lib/components/ui/field/field-separator.svelte",
+      "from": "site/gallery/src/lib/registry/ui/field/field-separator.svelte",
+      "sha256": "9354b3887533409a3607490eda6988104167fa9219f77cabf75a006236807e48"
+    },
+    {
+      "path": "src/lib/components/ui/field/field-set.svelte",
+      "from": "site/gallery/src/lib/registry/ui/field/field-set.svelte",
+      "sha256": "aee3c01d7afb5608b13c2b4841d4627304b7cddb45a577093d8208481411342d"
+    },
+    {
+      "path": "src/lib/components/ui/field/field-title.svelte",
+      "from": "site/gallery/src/lib/registry/ui/field/field-title.svelte",
+      "sha256": "c726e04191ceedba874935b5e03655992e45cd54c3707f96a7a868c3e4ea4498"
+    },
+    {
+      "path": "src/lib/components/ui/field/field.svelte",
+      "from": "site/gallery/src/lib/registry/ui/field/field.svelte",
+      "sha256": "fd4129b81a05a7a9284e1c38672bdf4e6f2668f3ee0f1bdcd95e699da96d451d"
+    },
+    {
+      "path": "src/lib/components/ui/field/index.ts",
+      "from": "site/gallery/src/lib/registry/ui/field/index.ts",
+      "sha256": "f23a9216b464c2d979b5994b8088e915e4ae8b69d1ee8eaa611ea336a8971e05"
+    },
+    {
+      "path": "src/lib/components/ui/input/index.ts",
+      "from": "site/gallery/src/lib/registry/ui/input/index.ts",
+      "sha256": "4e0ad69d49a27194c7f3dfd0cdd5933ee13fc40cc13a77138b547d300701d390"
+    },
+    {
+      "path": "src/lib/components/ui/input/input.svelte",
+      "from": "site/gallery/src/lib/registry/ui/input/input.svelte",
+      "sha256": "1807194804bce68400d950eb3a3aa1a0ff7ddcbce4d58fe3972640966faaa072"
+    },
+    {
+      "path": "src/lib/components/ui/label/index.ts",
+      "from": "site/gallery/src/lib/registry/ui/label/index.ts",
+      "sha256": "ea17621b03066fc6c0ab811ec97aac0cb2de4b504c0a1fc3f480c8fc4bef12f1"
+    },
+    {
+      "path": "src/lib/components/ui/label/label.svelte",
+      "from": "site/gallery/src/lib/registry/ui/label/label.svelte",
+      "sha256": "9ffcff650f61f1c19aae78b92c6af88d3b97eaf007a18b9020fc02c069605d05"
+    },
+    {
+      "path": "src/lib/components/ui/separator/index.ts",
+      "from": "site/gallery/src/lib/registry/ui/separator/index.ts",
+      "sha256": "beeaaaab286f1aeff1e43a8ef1c02a60de5e6349780d12af73e9646c6db98bf6"
+    },
+    {
+      "path": "src/lib/components/ui/separator/separator.svelte",
+      "from": "site/gallery/src/lib/registry/ui/separator/separator.svelte",
+      "sha256": "6640a4c992ec62329efe8d5aa499c39d3b1163b50f4f2bee0edebf5a4f49a9db"
+    },
+    {
+      "path": "src/lib/utils.ts",
+      "from": "site/gallery/src/lib/utils.ts",
+      "sha256": "d56c48595cabedfe55b5233e04383a388eec79bd43a595bdbd36081a8342fd8c"
+    }
+  ]
+}

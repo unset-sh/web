@@ -1,15 +1,33 @@
 {
   "$schema": "./node_modules/@biomejs/biome/configuration_schema.json",
-  "vcs": { "enabled": true, "clientKind": "git", "useIgnoreFile": true },
-  "files": { "includes": ["**", "!LICENSE", "!bun.lock"] },
-  "formatter": { "indentStyle": "space", "indentWidth": 2, "lineWidth": 120 },
+  "vcs": {
+    "enabled": true,
+    "clientKind": "git",
+    "useIgnoreFile": true
+  },
+  "files": {
+    "includes": [
+      "**",
+      "!LICENSE",
+      "!bun.lock",
+      "!src/lib/components/ui/**/*.svelte",
+      "!src/lib/components/ui/**/index.ts",
+      "!src/lib/utils.ts"
+    ]
+  },
+  "formatter": {
+    "indentStyle": "space",
+    "indentWidth": 2,
+    "lineWidth": 120
+  },
   "linter": {
     "rules": {
       "preset": "recommended",
       "style": {
         "noNonNullAssertion": "error",
         "noParameterAssign": "error",
-        "useConst": "error"
+        "useConst": "error",
+        "noHexColors": "error"
       },
       "suspicious": {
         "noConsole": "error",
@@ -20,5 +38,31 @@
       }
     }
   },
-  "javascript": { "formatter": { "quoteStyle": "double", "trailingCommas": "all" } }
+  "javascript": {
+    "formatter": {
+      "quoteStyle": "double",
+      "trailingCommas": "all"
+    }
+  },
+  "css": {
+    "parser": {
+      "tailwindDirectives": true
+    }
+  },
+  "overrides": [
+    {
+      "includes": ["**/*.svelte"],
+      "linter": {
+        "rules": {
+          "correctness": {
+            "noUnusedVariables": "off",
+            "noUnusedImports": "off"
+          },
+          "style": {
+            "useConst": "off"
+          }
+        }
+      }
+    }
+  ]
 }

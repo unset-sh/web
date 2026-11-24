@@ -145,6 +145,24 @@ describe("csp", () => {
     expect(answer.body).not.toContain("<script");
   });
 
+  test("a_page_loads_brand_styles_and_fonts_from_the_build_only", async () => {
+    const answer = await call("/");
+    const csp = String(answer.headers["content-security-policy"]);
+    expect(csp).toContain(`style-src ${ORIGIN}/_app/`);
+    expect(csp).toContain(`font-src ${ORIGIN}/_app/`);
+    const sheets = [...answer.body.matchAll(/<link href="([^"]+)" rel="stylesheet">/g)].map((m) => m[1]);
+    expect(sheets.length).toBeGreaterThan(0);
+    for (const sheet of sheets) {
+      expect(sheet).toMatch(/^\/?(\.\/)?_app\/immutable\/assets\/[\w.-]+\.css$/);
+      const css = await call(`/${String(sheet).replace(/^\.?\//, "")}`);
+      expect(css.status).toBe(200);
+      // Relative to the sheet, so under /_app/immutable/assets/ too.
+      const fonts = [...css.body.matchAll(/url\(([^)]+)\)/g)].map((m) => m[1]);
+      expect(fonts.length).toBeGreaterThan(0);
+      for (const font of fonts) expect(font).toMatch(/^\.\/[\w.-]+\.woff2$/);
+    }
+  });
+
   test("a_file_gets_the_static_policy", async () => {
     expect((await call("/robots.txt")).headers["content-security-policy"]).toBe(
       "default-src 'none'; frame-ancestors 'none'",

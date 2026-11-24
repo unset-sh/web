@@ -13,7 +13,7 @@ describe("web csp", () => {
   test("zero_script_groups_pinned", () => {
     expect(zeroScriptCsp(ORIGIN)).toEqual({
       public:
-        "default-src 'none'; img-src https://unset.sh/_app/; style-src https://unset.sh/_app/; font-src https://unset.sh/fonts/; form-action 'self'; base-uri 'none'; frame-ancestors 'none'; object-src 'none'; manifest-src 'self'",
+        "default-src 'none'; img-src https://unset.sh/_app/; style-src https://unset.sh/_app/; font-src https://unset.sh/_app/; form-action 'self'; base-uri 'none'; frame-ancestors 'none'; object-src 'none'; manifest-src 'self'",
       static: "default-src 'none'; frame-ancestors 'none'",
       app: "default-src 'none'; frame-ancestors 'none'",
     });
@@ -22,7 +22,7 @@ describe("web csp", () => {
 
   test("narrowed_replaces_self_only_in_file_directives", () => {
     expect(narrowed(KIT, ORIGIN)).toBe(
-      "default-src 'none'; script-src https://unset.sh/_app/ 'sha256-abc='; style-src https://unset.sh/_app/; font-src https://unset.sh/fonts/; img-src 'self'; connect-src 'self'",
+      "default-src 'none'; script-src https://unset.sh/_app/ 'sha256-abc='; style-src https://unset.sh/_app/; font-src https://unset.sh/_app/; img-src 'self'; connect-src 'self'",
     );
   });
 
