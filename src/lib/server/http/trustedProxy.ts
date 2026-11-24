@@ -1,7 +1,7 @@
 // Trusted proxy (P1.05; plan §2 rule 16, §5.2, §5.7): the client address comes from the one header the edge sets,
 // only when the request came from the edge, or from the socket where there is no edge (admin, behind Tailscale).
 // Every doubt is null, never a guess: P1.06 limits an unknown client in the strictest shared bucket.
-import { BlockList, isIPv4, isIPv6 } from "node:net"; // guard-allow: egress CIDR matching only, no socket
+import { BlockList, isIPv4, isIPv6 } from "node:net";
 import { ClientIp, unmapV4 } from "./clientIp.ts";
 
 export type ProxySettings = Readonly<{

@@ -6,7 +6,7 @@
 // the build's stylesheet, whose path server.ts read once from the build manifest, so it looks like the error page;
 // the hook sends it under the public policy, which allows /_app/ styles and /fonts/ and no script. On any other
 // route, or with no stylesheet, it loads nothing, so the static group's `default-src 'none'` holds.
-import { ERROR_MESSAGES } from "@unset/shared-errors";
+import { ERROR_MESSAGES } from "../errors/index.ts";
 
 const ESCAPES: Record<string, string> = { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" };
 const escapeHtml = (text: string): string => text.replace(/[&<>"']/g, (c) => ESCAPES[c] ?? c);

@@ -161,21 +161,8 @@ export function defineConfig<F extends Fields>(fields: F, options: { rules?: rea
   return { fields, rules: [...carried, ...(options.rules ?? [])] };
 }
 
-/**
- * Processes that load this config. `pds-admin` and `chat-admin` are absent: they import nothing outside their own
- * folder (plan §5.2). A process joins this list in the step that creates it.
- */
-export const SERVICES = [
-  "http",
-  "admin",
-  "api",
-  "indexer",
-  "media",
-  "review",
-  "jobs",
-  "audit-verify",
-  "chat-auth",
-] as const;
+/** Processes that load this config. A process joins this list in the step that creates it. */
+export const SERVICES = ["web"] as const;
 
 const PLACEHOLDER_COMMIT = "0".repeat(40);
 

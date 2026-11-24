@@ -1,26 +1,27 @@
-// The web process's entry point: adapter-node's documented custom server (https://svelte.dev/docs/kit/adapter-node,
-// "Custom server"; adapter-node 6.0.2) around the built `handler`. adapter-node serves the build's files and SvelteKit
+// The web process's entry point, from the old app's interfaces/web/server.ts, run with `bun server.ts`:
+// adapter-node's documented custom server (https://svelte.dev/docs/kit/adapter-node, "Custom server"; adapter-node
+// 6.0.2) around the built `handler`, on Bun's node:http. adapter-node serves the build's files and SvelteKit
 // sends its own CSRF 403 before hooks.server.ts runs (adapter-node files/handler.js serve_static; kit 3.2.0
 // src/runtime/server/respond.js), so what every response needs lives here, whatever produced it: the host check, the
 // security headers and the one log line. Headers are set before the handler; a header the app sets itself (a page's
 // CSP) replaces ours, because Node merges setHeader values into writeHead and the later write wins. We own listen and
-// the drain (shared/http/shutdown.ts). Settings load first and exit 78 when invalid (ADR 0054 decision 3).
+// the drain (src/lib/server/http/shutdown.ts). Settings load first and exit 78 when invalid.
 import { AsyncLocalStorage } from "node:async_hooks";
 import { randomUUID } from "node:crypto";
-import { createServer, type IncomingMessage, type ServerResponse } from "node:http"; // guard-allow: egress inbound listener only, sends nothing out
-import { bootOrExit, exitOnConfigError } from "@unset/shared-config";
-import { drain, exitOnSignals, hostAllowed, SECURITY_HEADERS } from "@unset/shared-http";
-import { createLogger, type LogFields } from "@unset/shared-log";
+import { createServer, type IncomingMessage, type ServerResponse } from "node:http";
 import { BODY_CAP } from "./src/lib/server/body-cap.ts";
+import { bootOrExit, exitOnConfigError } from "./src/lib/server/config/index.ts";
 import { schema } from "./src/lib/server/config.ts";
 import { STATIC_CSP } from "./src/lib/server/csp.ts";
-import { NOTE_KEY, type ProcessNote, type RequestNote, STAND_INS_KEY, type StandIns } from "./src/lib/server/note.ts";
+import { drain, exitOnSignals, hostAllowed, SECURITY_HEADERS } from "./src/lib/server/http/index.ts";
+import { createLogger, type LogFields } from "./src/lib/server/log/index.ts";
+import { NOTE_KEY, type ProcessNote, type RequestNote } from "./src/lib/server/note.ts";
 
 const config = bootOrExit(schema);
 const log = createLogger({ service: "web", commit: config.UNSET_COMMIT, env: config.UNSET_ENV });
-// Last resort (as interfaces/http/fatal.ts): without these Node prints the raw error past the scrubbing logger, and a
-// library message can carry a DID or handle (SE-7). A rejection drains as on SIGTERM; an uncaught exception exits 1
-// at once (Node 26 doc/api/process.md, 'uncaughtException': not safe to resume).
+// Last resort: without these the runtime prints the raw error past the scrubbing logger, and a library message can
+// carry a DID or handle. A rejection drains as on SIGTERM; an uncaught exception exits 1 at once (not safe to resume:
+// Node doc/api/process.md, 'uncaughtException', which Bun follows).
 process.on("unhandledRejection", (reason: unknown) => {
   log.logError(reason);
   process.kill(process.pid, "SIGTERM");
@@ -34,7 +35,7 @@ const BUILD_STYLESHEET = /^_app\/immutable\/assets\/[\w.-]+\.css$/;
 
 /**
  * The app's stylesheet, read once from SvelteKit's build manifest (`#kit/manifest`, package.json "imports"), for the
- * gate's refusal page. Under output.bundleStrategy "split" (P1.21g) kit 3.2.0 lists no stylesheet in
+ * gate's refusal page. Under output.bundleStrategy "split" kit 3.2.0 lists no stylesheet in
  * `manifest.client`; the one Tailwind sheet belongs to the root layout, node 0, whose module exports `stylesheets`
  * (build/server/nodes/0.js). Loading that node loads the root layout's code, which reads the process note, so this runs
  * after the handler has loaded. Without it the page is plain, which is all a missing or odd entry costs; gate.test.ts
@@ -52,10 +53,8 @@ async function buildStylesheet(): Promise<string | undefined> {
   }
 }
 
-const standIns = (globalThis as Record<symbol, unknown>)[STAND_INS_KEY] as StandIns | undefined;
 const note: ProcessNote = {
   config,
-  ...(standIns === undefined ? {} : { standIns }),
   requests: new AsyncLocalStorage<RequestNote>(),
   shutdown: { draining: [], close: [] },
 };
@@ -85,7 +84,7 @@ note.stylesheet = await buildStylesheet();
 
 /**
  * Every response carries these; the app replaces the CSP on its pages (hooks.server.ts). With Search and AI listing off
- * on the whole site (SEARCH_LISTING, P1.21b) every response, files and refusals included, also says noindex; a page
+ * on the whole site (SEARCH_LISTING) every response, files and refusals included, also says noindex; a page
  * that sets its own X-Robots-Tag sets the same value.
  */
 const BASE_HEADERS = {
@@ -113,7 +112,7 @@ const isProbe = (req: IncomingMessage) => pathOf(req) === "/health";
 
 /**
  * A page's data address: SvelteKit answers `<page>/__data.json` for every page route with the result of its server
- * loads, whatever `csr` says (kit 3.2.0 src/pathname.js `has_data_suffix`, these two suffixes; book P1.22h). It is
+ * loads, whatever `csr` says (kit 3.2.0 src/pathname.js `has_data_suffix`, these two suffixes). It is
  * never a search result, so every answer there says noindex whatever its page says: the page's own X-Robots-Tag is
  * set by the page's load, which does not run when the client asks for the layout alone or when the gate redirects.
  */

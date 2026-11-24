@@ -1,28 +1,24 @@
-// The request gate of the web process (ADR 0054, ADR 0056): what shared/http/server.ts does for Hono, done the
-// SvelteKit way. SvelteKit keeps its own Origin check on form posts (it runs before this hook; kit 3.2.0
-// src/runtime/server/respond.js) and the body cap (adapter-node BODY_SIZE_LIMIT, set by server.ts). server.ts does
-// what every response needs, files and SvelteKit's early refusals included: the host check, the base headers, the log
-// line and the drain. This hook adds, in order: the route's policy (none = refused), test routes, form-only bodies,
-// the body size, the client address and its limit, the session and the DID limit, then the route under its deadline,
-// and last the response's CSP: SvelteKit's own, narrowed, on an app page and on a public page whose policy says it runs
-// the client (ADR 0114); the group's fixed one on everything else. Every check fails closed. Kit docs:
-// https://svelte.dev/docs/kit/hooks (3.2.0).
+// The request gate of the web process, adapted from the old app's hooks.server.ts (its ADR 0054 and ADR 0056).
+// SvelteKit keeps its own Origin check on form posts (it runs before this hook; kit 3.2.0 src/runtime/server/respond.js)
+// and the body cap (adapter-node BODY_SIZE_LIMIT, set by server.ts). server.ts does what every response needs, files
+// and SvelteKit's early refusals included: the host check, the base headers, the log line and the drain. This hook
+// adds, in order: the route's policy (none = refused), form-only bodies, the body size, the client address and its
+// limit, then the route under its deadline, and last the response's CSP: SvelteKit's own, narrowed, on an app page;
+// the group's fixed one on everything else. Every check fails closed. Kit docs: https://svelte.dev/docs/kit/hooks
+// (3.2.0). The session part of the old gate comes with sign-in.
 import { randomUUID } from "node:crypto";
-import { isRedirect, type RequestEvent, redirect } from "@sveltejs/kit";
+import { isRedirect, type RequestEvent } from "@sveltejs/kit";
 import type { Handle, HandleServerError, ServerInit } from "@sveltejs/kit/hooks";
-import { AppError, ERROR_CODES, ERROR_MESSAGES } from "@unset/shared-errors";
-import { type ClientIp, createClientIpResolver } from "@unset/shared-http";
 import { building, dev } from "$app/env";
-import { openApp } from "./lib/server/app-gate.ts";
+import { AppError, ERROR_CODES } from "./lib/errors/index.ts";
 import { services, startServices } from "./lib/server/compose.ts";
 import { narrowed, zeroScriptCsp } from "./lib/server/csp.ts";
+import { type ClientIp, createClientIpResolver } from "./lib/server/http/index.ts";
 import type { PolicyName } from "./lib/server/limits.ts";
 import type { PageGroup, RoutePolicy } from "./lib/server/policy.ts";
 import { refusalPage, wantsPage } from "./lib/server/refusal-page.ts";
 import { policyOf } from "./lib/server/route-table.ts";
 import { config, requestNote, stylesheet } from "./lib/server/runtime.ts";
-import { sessionIssuerOrigin, sessionOf } from "./lib/server/session.ts";
-import { themeChunk } from "./lib/server/theme.ts";
 
 /** Only these bodies are accepted. SvelteKit's Origin check covers exactly the form types, so refusing every other
  * type here puts every POST under that check. */
@@ -50,26 +46,6 @@ function plain(status: number, code: string, headers: Record<string, string> = {
   return response;
 }
 
-/**
- * A refusal of an enhanced form post (`use:enhance` sends x-sveltekit-action) as the action failure SvelteKit's client
- * reads: JSON `{ type, status, data }` with `data` in devalue's form (kit 3.2.0 src/runtime/app/forms/shared.js
- * `deserialize`; page/actions.js `action_json`). The client hands it to the form's handler with the status, so a
- * card editor keeps what was typed and shows the catalog's words. `data` is a plain object of two strings, which
- * devalue writes as `[{"code":1,"message":2},code,message]` (checked against devalue 5.9.4's stringify and parse). No
- * request text reaches it; it is never stored.
- */
-function actionFailure(code: string, refused: Response): Response {
-  const message = ERROR_MESSAGES[code as keyof typeof ERROR_MESSAGES] ?? code;
-  const data = JSON.stringify([{ code: 1, message: 2 }, code, message]);
-  const headers = new Headers(refused.headers);
-  headers.set("content-type", "application/json");
-  headers.set("cache-control", "private, no-store");
-  return new Response(JSON.stringify({ type: "failure", status: refused.status, data }), {
-    status: refused.status,
-    headers,
-  });
-}
-
 /** Checks on the request itself, before anyone is identified: method, body type and declared size. */
 function requestProblem(request: Request, policy: RoutePolicy): Response | undefined {
   if (request.method === "GET" || request.method === "HEAD") return undefined;
@@ -93,55 +69,6 @@ function limited(name: PolicyName, subject: { ip: ClientIp | null } | { did: str
   return verdict.ok ? undefined : plain(429, "http.rate_limited", { "retry-after": String(verdict.retryAfterS) });
 }
 
-const isRead = (request: Request): boolean => request.method === "GET" || request.method === "HEAD";
-
-/**
- * The path a signed-out GET of a `required` page returns to after sign-in: its own route id without layout groups
- * when it has no parameter, else the policy's fixed `returnTo`; null when neither (the gate refuses). Never the
- * request's own URL, so no request text reaches the query.
- */
-function returnPathOf(routeId: string, policy: RoutePolicy): string | null {
-  const path = routeId.replace(/\/\([^/]+\)/g, "") || "/";
-  return policy.returnTo ?? (path.includes("[") ? null : path);
-}
-
-/** The session part of the gate: who is asking, what a signed-out request gets, the app gate, the member's buckets. */
-async function sessionProblem(event: RequestEvent, policy: RoutePolicy, deadline: AbortSignal) {
-  // A page that runs no script and needs no member reads no session: its bytes never depend on a cookie, and a stale
-  // cookie is not cleared there (interfaces/http's public group reads none either).
-  const reads = policy.session !== undefined || policy.group === "app";
-  const session = reads ? await sessionOf(event, deadline) : undefined;
-  const did = session?.did;
-  event.locals.issuerOrigin = sessionIssuerOrigin(session);
-  event.locals.privacyNotice = false;
-  const needed =
-    policy.session === "required" ||
-    policy.session === "onboarding" ||
-    (policy.session === "writes" && !isRead(event.request));
-  // The page sign-in returns to: its own route id with no parameter, else the policy's fixed returnTo.
-  const next = () => {
-    const path = returnPathOf(event.route.id ?? "", policy);
-    if (path === null) throw new Error("gate: a session route with a parameter names no returnTo");
-    return path;
-  };
-  if (session === undefined) {
-    if (!needed) return { did };
-    // A visitor, or a member whose session ended mid-edit, goes to sign-in and back, as interfaces/http does; a form
-    // action enhanced by the client gets the same redirect as JSON (kit respond.js `action_json_redirect`).
-    // SvelteKit's redirect keeps the cookie changes (a cleared stale cookie) and answers a client-side navigation
-    // (__data.json) in the form its client expects (kit respond.js).
-    const back = next();
-    redirect(303, back === "/" ? "/login" : `/login?${new URLSearchParams({ next: back })}`);
-  }
-  if (policy.session === undefined || policy.session === "optional" || policy.probe) return { did };
-  // The member's bucket first, so a refused request costs no account read and no PDS call.
-  const refused = limited(limitOf(event.request, policy), { did: session.did });
-  if (refused || policy.session === "onboarding") return { did, refused };
-  const gate = { cookies: event.cookies, deadline, deadlineAt: event.locals.deadlineAt };
-  event.locals.privacyNotice = (await openApp(gate, session, next())).privacyNotice;
-  return { did };
-}
-
 /** The gate, in order; a Response means the request stops there. */
 const gate: Handle = async ({ event, resolve }) => {
   const policy = policyOf(event.route.id);
@@ -149,21 +76,13 @@ const gate: Handle = async ({ event, resolve }) => {
     services().log.error("error", { code: "internal.error", route: "/unlisted" }); // a route with no policy.ts: refuse, never guess
     return plain(500, "internal.error");
   }
-  if (policy.testOnly && config.TEST_ROUTES !== true) return plain(404, "http.not_found");
   const problem = requestProblem(event.request, policy);
   if (problem) return problem;
   const byIp = policy.probe
     ? undefined
     : limited(limitOf(event.request, policy), { ip: clientIpOf(event.request.headers, event.getClientAddress()) });
   if (byIp) return byIp;
-  return withDeadline(event, policy, async (deadline) => {
-    const { did, refused } = await sessionProblem(event, policy, deadline);
-    if (refused) return refused;
-    event.locals.did = did;
-    // A member's own theme on every page rendered for them; a page every visitor shares follows the system.
-    const readsTheme = policy.group === "app" || did !== undefined;
-    return resolve(event, { transformPageChunk: themeChunk(readsTheme, event.request.headers.get("cookie")) });
-  });
+  return withDeadline(event, policy, () => resolve(event));
 };
 
 /** The route runs under its deadline; past it the visitor gets 503 and a late result is logged, never sent. */
@@ -172,10 +91,9 @@ async function withDeadline(
   policy: RoutePolicy,
   run: (deadline: AbortSignal) => Promise<Response>,
 ): Promise<Response> {
-  const ms = (policy.bodyWindowMs ?? 0) + (policy.deadlineMs ?? config.REQUEST_DEADLINE_MS);
+  const ms = policy.deadlineMs ?? config.REQUEST_DEADLINE_MS;
   const deadline = AbortSignal.timeout(ms);
   event.locals.deadline = deadline; // loads and actions pass it to every call they make
-  event.locals.deadlineAt = performance.now() + ms;
   const result = run(deadline);
   const timedOut = new Promise<"deadline">((done) =>
     deadline.addEventListener("abort", () => done("deadline"), { once: true }),
@@ -193,18 +111,18 @@ async function withDeadline(
 }
 
 /**
- * Builds every service before the first request: adapter-node awaits this while its handler is imported, so a bad
- * database, key or connection budget stops the process before server.ts listens (kit 3.2.0
- * src/runtime/server/instance.js `init`; https://svelte.dev/docs/kit/hooks#Shared-hooks-init). Not while building.
+ * Builds every service before the first request: adapter-node awaits this while its handler is imported, so a failure
+ * stops the process before server.ts listens (kit 3.2.0 src/runtime/server/instance.js `init`;
+ * https://svelte.dev/docs/kit/hooks#Shared-hooks-init). Not while building.
  */
-export const init: ServerInit = async () => {
-  if (!building) await startServices();
+export const init: ServerInit = () => {
+  if (!building) startServices();
 };
 
 /**
- * What the gate answers for an error it caught: a catalog failure a page may show (the session store's
- * service.unavailable, the pool's db.busy, a deadline: all 503) keeps its own status and code, so the member is told to
- * try again; anything else is 500 internal.error. Only the code is sent, never the error's message or cause.
+ * What the gate answers for an error it caught: a catalog failure a page may show (a deadline: 503) keeps its own
+ * status and code, so the visitor is told to try again; anything else is 500 internal.error. Only the code is sent,
+ * never the error's message or cause.
  */
 function caughtResponse(error: unknown): Response {
   if (error instanceof AppError && ERROR_CODES[error.code].public) return plain(error.status, error.code);
@@ -225,79 +143,48 @@ export const handle: Handle = async (input) => {
     services().log.logError(error);
     response = caughtResponse(error);
   }
-  const policy = policyOf(event.route.id);
-  const route: Headed = { group: policy?.group ?? "static", client: runsClient(policy) };
+  const group = policyOf(event.route.id)?.group ?? "static";
   const refused = REFUSALS.get(response);
-  const optional = policy?.session === "optional";
-  const audience: Audience = { member: event.locals.did !== undefined, optional };
-  if (refused !== undefined && event.request.headers.has("x-sveltekit-action")) {
-    return withGroupHeaders(actionFailure(refused, response), route, event.isDataRequest, audience);
-  }
   if (refused !== undefined && wantsPage(event.request, event.isDataRequest)) {
-    const styled = route.group === "app" || route.group === "public";
+    const styled = group === "app" || group === "public";
     response = refusalPage(refused, response.status, response.headers, styled ? stylesheet() : undefined);
     // A styled refusal page runs no script and loads only the build's styles and our fonts: the public policy. The app
     // group's fallback (default-src 'none') would block its stylesheet.
-    if (styled) return withGroupHeaders(response, route, event.isDataRequest, audience, "public");
+    if (styled) return withGroupHeaders(response, group, event.isDataRequest, "public");
   }
-  return withGroupHeaders(response, route, event.isDataRequest, audience);
+  return withGroupHeaders(response, group, event.isDataRequest);
 };
 
 /**
- * Whether a public route's page runs SvelteKit's client (ADR 0114 point 3: a page is switched on in its own step).
- * Read from the route's policy alone, never from the request, so nothing a visitor sends turns it on.
- */
-const runsClient = (policy: RoutePolicy | undefined): boolean => policy?.group === "public" && policy.client === true;
-
-/** What the response headers follow: the route's group, and whether it is a public route whose page runs the client. */
-type Headed = Readonly<{ group: PageGroup; client: boolean }>;
-
-/** Who a response was rendered for: a member (the gate read a live session), and whether the route reads one if sent. */
-type Audience = Readonly<{ member: boolean; optional: boolean }>;
-
-/**
- * An `app` page keeps SvelteKit's CSP, narrowed to our paths, and so does the page itself (status 200) of a public
- * route that runs the client (ADR 0114); every other response gets its group's fixed one. On such a public route that
- * is every refusal, the data address (SvelteKit sends no policy with either) and the error page of a failed load,
- * which runs no script: for it SvelteKit takes `csr` from the layouts alone (kit 3.2.0
- * src/runtime/server/page/index.js:276-291), and the root layout says false. An
+ * An `app` page keeps SvelteKit's CSP, narrowed to our paths; every other response gets its group's fixed one. An
  * `app` page, and the data its client loads (__data.json), may differ per member, so it is private, never stored and
- * varies on Cookie, as interfaces/http/prefs/theme.ts has it. So is any other response rendered for a member, or one
- * that clears a cookie, whatever the page asked for. A page with an `optional` session varies on Cookie even for a
- * visitor, so a browser that signs in never reuses the visitor copy it kept; other public pages read no cookie, so
- * their bytes never depend on one.
+ * varies on Cookie. So is any response that sets a cookie, whatever the page asked for.
  */
 function withGroupHeaders(
   response: Response,
-  route: Headed,
+  group: PageGroup,
   dataRequest: boolean,
-  audience: Audience,
-  cspGroup: PageGroup = route.group,
+  cspGroup: PageGroup = group,
 ): Response {
-  const { group } = route;
   const out = new Response(response.body, response); // SvelteKit's own responses may have immutable headers
   const html = out.headers.get("content-type")?.startsWith("text/html") === true;
-  // A redirect is never stored, as interfaces/http's redirect.ts sends it (a 303 is not cacheable without explicit
-  // freshness anyway, RFC 9110 §15.4.4; this keeps it so behind any cache).
+  // A redirect is never stored (a 303 is not cacheable without explicit freshness anyway, RFC 9110 §15.4.4; this
+  // keeps it so behind any cache).
   if (out.status >= 300 && out.status < 400 && !out.headers.has("cache-control")) {
     out.headers.set("cache-control", "no-store");
   }
-  const personal = audience.member || out.headers.has("set-cookie");
-  if ((group === "app" && (html || dataRequest)) || (group !== "app" && personal)) {
+  if ((group === "app" && (html || dataRequest)) || out.headers.has("set-cookie")) {
     out.headers.set("cache-control", "private, no-store");
-    out.headers.append("vary", "Cookie");
-  } else if (audience.optional) {
     out.headers.append("vary", "Cookie");
   }
   const kit = out.headers.get("content-security-policy");
-  const runsScript = group === "app" || (route.client && out.status === 200);
-  out.headers.set("content-security-policy", kit !== null && runsScript ? kitPolicy(kit) : ZERO_SCRIPT[cspGroup]);
+  out.headers.set("content-security-policy", kit !== null && group === "app" ? kitPolicy(kit) : ZERO_SCRIPT[cspGroup]);
   return out;
 }
 
 /**
  * SvelteKit's own policy for a page that runs its client, narrowed to our paths. Under `vite dev` Vite serves files
- * from other paths, so 'self' stays (ADR 0054 decision 5).
+ * from other paths, so 'self' stays (old app ADR 0054 decision 5).
  */
 const kitPolicy = (kit: string): string => (dev ? kit : narrowed(kit, config.PUBLIC_ORIGIN));
 

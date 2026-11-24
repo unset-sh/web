@@ -1,6 +1,6 @@
 // The structured logger (P1.03; rule SE-7): one JSON line per call, only allowlisted fields, every string scrubbed.
 // It cannot write an IP address, a user agent, a raw path, a secret or free text.
-import { AppError, type ErrorCode } from "@unset/shared-errors";
+import { AppError, type ErrorCode } from "../../errors/index.ts";
 import { scrub } from "./scrub.ts";
 
 /** Known events. A later step adds the events it logs here; anything else is logged as `log.unknown_event`. */

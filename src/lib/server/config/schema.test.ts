@@ -152,12 +152,12 @@ describe("field kinds", () => {
 
   test("cross_field_rule", () => {
     const schema = defineEntrypointConfig({});
-    const base = { UNSET_ENV: "prod", UNSET_SERVICE: "http", LISTEN_PORT: "8080" };
+    const base = { UNSET_ENV: "prod", UNSET_SERVICE: "web", LISTEN_PORT: "8080" };
     expect(problems(() => loadConfig(schema, { ...base, UNSET_COMMIT: "0".repeat(40) }, quiet))).toEqual([
       { key: "UNSET_COMMIT", reason: "invalid" },
     ]);
     const dev = loadConfig(schema, { ...base, UNSET_ENV: "dev", UNSET_COMMIT: "0".repeat(40) }, quiet);
-    expect(dev.UNSET_SERVICE).toBe("http");
+    expect(dev.UNSET_SERVICE).toBe("web");
     expect(loadConfig(schema, { ...base, UNSET_COMMIT: "a".repeat(40) }, quiet).LISTEN_PORT).toBe(8080);
   });
 });

@@ -1,26 +1,11 @@
-// The server kit's config fragment (P1.04k). Each entrypoint's schema spreads `httpKitConfig`, so a kit key never
-// arrives without its cross-field rule, and later kit steps (P1.05–P1.09) add their keys here, never in an interface.
-import { int, list, oneOf, origin, str, withRule } from "@unset/shared-config";
+// The server kit's config fragment (old app P1.04k). The web schema spreads `httpKitConfig`, so a kit key never
+// arrives without its cross-field rule.
+import { int, list, oneOf, origin, str, withRule } from "../config/index.ts";
 import { parseCidr } from "./trustedProxy.ts";
 
 const LABEL = "[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?";
 /** An exact lowercase host, or a leading-dot suffix entry (`.0x40.me`) matching exactly one label below it. */
 const HOST_ENTRY = new RegExp(`\\.?${LABEL}(?:\\.${LABEL})*`);
-
-/**
- * Top-level domains whose registrable domain is the last two labels (P1.08; plan §5.2): the product's domains (`.sh`,
- * `.ac`, `.me`, `.space`), the media domain's (`.net`), and `.test` for test config. Any other TLD is refused, so
- * the same-site check needs no public-suffix library and never guesses.
- */
-const KNOWN_TLDS: readonly string[] = [".sh", ".ac", ".me", ".space", ".net", ".test"];
-
-/** The site (registrable domain) of a URL's host: an IP or one-label host is its own site; else known TLDs only. */
-function siteOf(host: string): string | undefined {
-  if (host.startsWith("[") || /^[0-9.]+$/.test(host)) return host;
-  const labels = host.split(".");
-  if (labels.length === 1) return host;
-  return KNOWN_TLDS.includes(`.${labels.at(-1)}`) ? labels.slice(-2).join(".") : undefined;
-}
 
 /** True when `value` is `https:`, or plain http where UNSET_ENV is dev (fail closed when UNSET_ENV is absent). */
 const secureOrDev = (value: unknown, config: Readonly<Record<string, unknown>>) =>
@@ -67,17 +52,6 @@ export const httpKitConfig = {
   HTTP_BODY_LIMIT_BYTES: int({ min: 1024, max: 1_048_576, default: 65_536 }),
   /** Rate-limit buckets held at once (P1.06): about 12 MB at the default; past it, new keys share a strict bucket. */
   RATE_LIMIT_MAX_KEYS: int({ min: 1, max: 1_000_000, default: 100_000 }),
-  /**
-   * The media proxy's origin (P1.08), listed in the page CSPs' `img-src`. It must be another site than the public
-   * origin (plan §5.2), so an uploaded file opened directly never runs in ours. The media process serves this origin
-   * itself, so it alone skips the comparison.
-   */
-  MEDIA_ORIGIN: withRule(origin({ protocols: ["https:", "http:"] }), (config) => {
-    if (!secureOrDev(config.MEDIA_ORIGIN, config)) return false;
-    if (config.UNSET_SERVICE === "media") return true;
-    const media = siteOf(new URL(String(config.MEDIA_ORIGIN)).hostname);
-    return media !== undefined && media !== siteOf(new URL(String(config.PUBLIC_ORIGIN)).hostname);
-  }),
 };
 
 /** What the kit reads from an entrypoint's loaded config: the common keys (P1.02) and its own fragment. */
@@ -96,5 +70,4 @@ export type HttpKitConfig = Readonly<{
   TRUSTED_PROXY_HOPS: number;
   HTTP_BODY_LIMIT_BYTES: number;
   RATE_LIMIT_MAX_KEYS: number;
-  MEDIA_ORIGIN: string;
 }>;

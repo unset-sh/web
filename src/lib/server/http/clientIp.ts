@@ -1,6 +1,6 @@
 // The client's address as a value that cannot leak (P1.05; plan §2 rule 16, invariant 3). It prints, serialises and
 // inspects as `[ip]`; the only way out is `rateKey()`, the bucket key rate limits use (P1.06).
-import { isIPv4, isIPv6 } from "node:net"; // guard-allow: egress parses addresses only, opens no socket
+import { isIPv4, isIPv6 } from "node:net";
 
 const HIDDEN = "[ip]";
 const MAPPED_V4 = /^::ffff:(\d{1,3}(?:\.\d{1,3}){3})$/i;

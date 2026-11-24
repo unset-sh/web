@@ -1,5 +1,5 @@
-import { defineConfig, loadConfig, oneOf } from "@unset/shared-config";
 import { describe, expect, test } from "vitest";
+import { defineConfig, loadConfig, oneOf } from "../config/index.ts";
 import { hostAllowed, httpKitConfig } from "./config.ts";
 
 const ENV = {
@@ -9,7 +9,6 @@ const ENV = {
   TRUSTED_PROXY_MODE: "header",
   TRUSTED_PROXY_HEADER: "x-forwarded-for",
   TRUSTED_PROXY_CIDRS: "10.0.0.0/8,fd00::/8",
-  MEDIA_ORIGIN: "https://media.example.net",
 };
 const load = (env: Record<string, string>) =>
   loadConfig(defineConfig({ ...httpKitConfig }), env, { onUnknownKeys: () => undefined });
@@ -43,7 +42,6 @@ describe("httpKitConfig", () => {
       TRUSTED_PROXY_HOPS: 1,
       HTTP_BODY_LIMIT_BYTES: 65_536,
       RATE_LIMIT_MAX_KEYS: 100_000,
-      MEDIA_ORIGIN: "https://media.example.net",
     });
   });
 
@@ -65,38 +63,6 @@ describe("httpKitConfig", () => {
     expect(problems({ ...ENV, RATE_LIMIT_MAX_KEYS: "0" }, load)).toEqual([
       { key: "RATE_LIMIT_MAX_KEYS", reason: "invalid" },
     ]);
-  });
-
-  test("media_same_site_refused", () => {
-    // Plan §5.2: the media origin is another site, so an uploaded file opened directly never runs in ours.
-    for (const media of ["https://media.unset.sh", "https://unset.sh", "https://a.b.unset.sh"]) {
-      expect(problems({ ...ENV, MEDIA_ORIGIN: media })).toEqual([{ key: "MEDIA_ORIGIN", reason: "invalid" }]);
-    }
-    // A TLD outside KNOWN_TLDS cannot be compared, so it is refused rather than guessed.
-    expect(problems({ ...ENV, MEDIA_ORIGIN: "https://sub.example.com" })).toEqual([
-      { key: "MEDIA_ORIGIN", reason: "invalid" },
-    ]);
-    expect(problems({ ...ENV, MEDIA_ORIGIN: "http://media.example.net" })).toEqual([
-      { key: "MEDIA_ORIGIN", reason: "invalid" },
-    ]);
-    // The media process serves the media origin itself.
-    const media = defineConfig({
-      ...httpKitConfig,
-      UNSET_ENV: oneOf(["dev", "test", "prod"]),
-      UNSET_SERVICE: oneOf(["http", "media"]),
-    });
-    const env = { ...ENV, UNSET_SERVICE: "media", MEDIA_ORIGIN: "https://unset.sh" };
-    expect(loadConfig(media, env, { onUnknownKeys: () => undefined }).MEDIA_ORIGIN).toBe("https://unset.sh");
-    expect(() => loadConfig(media, { ...env, UNSET_SERVICE: "http" }, { onUnknownKeys: () => undefined })).toThrow(
-      "MEDIA_ORIGIN invalid",
-    );
-  });
-
-  test("removed_keys_left_in_an_env_file_do_not_stop_boot", () => {
-    // P1.21c removed ASSETS_BASE and DEV_VITE_ORIGIN, which fed only the dead Hono-era CSPs. An env file that still
-    // sets them, even to a value the old rules refused, loads; the schema never reads a key it does not name.
-    const leftover = { ...ENV, ASSETS_BASE: "https://static.unset.sh/", DEV_VITE_ORIGIN: "http://localhost:5173" };
-    expect(problems(leftover)).toEqual([]);
   });
 
   test("plain_http_only_in_dev", () => {

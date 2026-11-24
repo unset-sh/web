@@ -5,10 +5,11 @@
 // member's DID. Each policy gets the use a person really makes, which must pass, and a flood, which must not. No test
 // changes a limit; a realistic use refused here would be written as `test.fails` and reported.
 //
-// Staging and production run in socket mode (deployment/compose.dev.yaml TRUSTED_PROXY_MODE: socket; ADR 0042): the
+// Staging and production run in socket mode (the old app's deployment/compose.dev.yaml TRUSTED_PROXY_MODE: socket; its ADR 0042): the
 // edge holds each address to its zones, and here only the site-wide and per-member buckets stay.
-import { createClientIpResolver, createRateLimiter, type PolicyName } from "@unset/shared-http";
+
 import { describe, expect, test } from "vitest";
+import { createClientIpResolver, createRateLimiter, type PolicyName } from "./http/index.ts";
 import { policiesFor } from "./limits.ts";
 
 type Request = { at: number; policy: PolicyName; address: string; did?: string };
@@ -53,30 +54,12 @@ const paced = (count: number, everyMs: number, make: (at: number) => Request, fr
 describe("one member", () => {
   const save = (at: number): Request => ({ at, policy: "profile", address: EDGE, did: member(1) });
 
-  test("saving_the_profile_three_times_fast_then_arranging_twenty_cards_in_a_minute_passes", () => {
+  test("saving_the_profile_three_times_fast_then_twenty_more_in_a_minute_passes", () => {
     expect(refused("socket", [...paced(3, 100, save), ...paced(20, 3000, save, 1000)])).toBe(0);
   });
 
-  test("thirty_one_card_writes_at_once_are_refused_once", () => {
+  test("thirty_one_profile_saves_at_once_are_refused_once", () => {
     expect(refused("socket", paced(31, 0, save))).toBe(1);
-  });
-
-  test("asking_for_an_invite_three_times_in_an_hour_passes_and_an_eleventh_at_once_is_refused", () => {
-    const ask = (at: number): Request => ({ at, policy: "invite", address: EDGE, did: member(1) });
-    expect(refused("socket", paced(3, 600_000, ask))).toBe(0);
-    expect(refused("socket", paced(11, 0, ask))).toBe(1);
-  });
-
-  test("an_impatient_member_pressing_mark_all_as_read_ten_times_in_two_seconds_and_opening_fifty_passes", () => {
-    // P2.27: each press and each opened row is one POST under `notifications`; repeats change nothing more.
-    const press = (at: number): Request => ({ at, policy: "notifications", address: EDGE, did: member(1) });
-    expect(refused("socket", [...paced(10, 200, press), ...paced(50, 1000, press, 2000)])).toBe(0);
-    expect(refused("header", [...paced(10, 200, press), ...paced(50, 1000, press, 2000)])).toBe(0);
-  });
-
-  test("a_hundred_and_twenty_one_notification_posts_at_once_are_refused_once", () => {
-    const press = (at: number): Request => ({ at, policy: "notifications", address: EDGE, did: member(1) });
-    expect(refused("socket", paced(121, 0, press))).toBe(1);
   });
 
   test("clicking_four_times_a_second_for_a_minute_passes_with_addresses_seen", () => {
@@ -129,35 +112,5 @@ describe("the whole site behind the edge", () => {
         paced(30_001, 0, (at) => ({ at, policy: "default", address: EDGE })),
       ),
     ).toBe(1);
-  });
-});
-
-describe("invite requests (P2.10r; ADR 0080)", () => {
-  const ask = (at: number, n = 1): Request => ({ at, policy: "inviteRequest", address: address(n) });
-  const HOUR = 3_600_000;
-
-  test("a_visitor_who_mistypes_twice_then_sends_passes", () => {
-    expect(
-      refused(
-        "header",
-        paced(3, 20_000, (at) => ask(at)),
-      ),
-    ).toBe(0);
-  });
-
-  test("a_fourth_request_from_one_address_within_the_hour_is_refused", () => {
-    expect(
-      refused(
-        "header",
-        paced(4, 1000, (at) => ask(at)),
-      ),
-    ).toBe(1);
-  });
-
-  test("twenty_visitors_over_a_day_pass_and_a_twenty_first_at_once_is_refused", () => {
-    // Behind the edge only the site-wide bucket stays: 20 at once, refilled at 20 a day.
-    const viaEdge = (at: number): Request => ({ ...ask(at), address: EDGE });
-    expect(refused("socket", paced(20, HOUR, viaEdge))).toBe(0);
-    expect(refused("socket", paced(21, 1000, viaEdge))).toBe(1);
   });
 });

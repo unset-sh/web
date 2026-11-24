@@ -1,5 +1,5 @@
 // Every route's policy, gathered at build time from the policy.ts beside each route (policy.ts says why). A route with
-// no policy.ts is refused (fail closed), and tests/integration/web/gate.test.ts checks every route folder has one.
+// no policy.ts is refused (fail closed), and src/gate.test.ts checks every route folder has one.
 import type { RoutePolicy } from "./policy.ts";
 
 const files = import.meta.glob<{ policy: RoutePolicy }>("/src/routes/**/policy.ts", { eager: true });
@@ -14,10 +14,8 @@ export const ROUTES: Readonly<Record<string, RoutePolicy>> = Object.freeze(
   Object.fromEntries(Object.entries(files).map(([file, mod]) => [routeIdOf(file), mod.policy])),
 );
 
-/** A path no route matches (a 404): it still passes the host check and the default limit, and runs no script. Its
- * session is read when sent (P1.20k), so the not-found page shows a member signed in, in their theme; their copy is
- * private (hooks.server.ts). */
-export const UNMATCHED: RoutePolicy = { group: "public", limit: "default", session: "optional" };
+/** A path no route matches (a 404): it still passes the host check and the default limit, and runs no script. */
+export const UNMATCHED: RoutePolicy = { group: "public", limit: "default" };
 
 /** The policy of a request's route: the route's row, UNMATCHED for no route, undefined for a route with no row. */
 export function policyOf(routeId: string | null): RoutePolicy | undefined {

@@ -1,5 +1,5 @@
-import { AppError } from "@unset/shared-errors";
 import { describe, expect, test } from "vitest";
+import { AppError } from "../../errors/index.ts";
 import { createLogger, type LogFields } from "./index.ts";
 
 /** A logger writing into an array, with a fixed clock. */
