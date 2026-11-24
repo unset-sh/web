@@ -76,3 +76,19 @@ Web holds no grant and no account data. It keeps three cookies, all `__Host-`, `
 `/login` takes a handle and sends the browser to that account's server, which sends it back to `/auth/callback`.
 `/profile` needs a session; without one it sends the visitor to `/login`. `POST /logout` ends this browser's session
 only, and the account's other browsers stay signed in.
+
+## The image
+
+`Dockerfile` builds the image that deployment runs: `vite build` in a build stage, then a distroless Bun 1.4.4 stage
+that runs `bun server.ts` as uid 65532 with no `node_modules`, because the build bundles every dependency. The image
+takes every setting above from its environment and holds no secret. Its health check calls `/health` on
+`LISTEN_PORT`.
+
+Each merge into `staging` builds it in CI and pushes it by digest to `ghcr.io/unset-sh/staging/web`, through tooling's
+shared staging image workflow (`.github/workflows/image-staging.yml`). The install reads `@unset-sh/brand` from GitHub
+Packages, so the workflow hands the run's own read token to the build as the BuildKit secret `github_packages_token`.
+To build it yourself:
+
+```sh
+GITHUB_PACKAGES_TOKEN=<a read:packages token> docker build --secret id=github_packages_token,env=GITHUB_PACKAGES_TOKEN .
+```

@@ -1,0 +1,11 @@
+# Only what the Dockerfile copies, and never a secret, a local environment file or a local build.
+*
+!package.json
+!bun.lock
+!bunfig.toml
+!tsconfig.json
+!vite.config.ts
+!server.ts
+!static/
+!src/
+src/**/*.test.ts
