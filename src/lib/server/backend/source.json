@@ -1,0 +1,7 @@
+{
+  "source": "unset-sh/backend",
+  "commit": "e65229f47950190a4c0cc664778ea78b2fb62872",
+  "from": "api/internal/app.d.ts",
+  "path": "src/lib/server/backend/app.d.ts",
+  "sha256": "7e70ddb97118610dace09d8c6cd7ecc0624f67ddf7fd57bbcb363f6fd62fee03"
+}
