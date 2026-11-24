@@ -1,0 +1,24 @@
+name: docs-export
+
+# Packages docs/site/ as the web section of docs.unset.sh. unset-sh/docs imports only a successful
+# push run of this file on main (tooling docs/import-docs.md, source key web), so the docs reach the
+# site when staging is promoted. The exporter reads committed files only and runs no repository
+# command. Pinned to a full tooling commit.
+
+on:
+  pull_request:
+    branches: [staging, main]
+  push:
+    branches: [staging, main]
+
+permissions: {}
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  export:
+    uses: unset-sh/tooling/.github/workflows/automation-docs-export.yml@45975f0c7a9ef3d20a0cd2cba531288ac8bf2f90
+    permissions:
+      contents: read
