@@ -37,7 +37,10 @@ function build(): Services {
   shutdown.draining.push(() => health.setState("draining"));
   shutdown.close.push(async () => clearInterval(sweeper));
   // Backend's own readiness is not web's: a page that needs it answers service.unavailable while it is down.
-  const accounts = createBackendAccounts({ url: config.BACKEND_URL });
+  // config.ts holds all three files for an https backend and none for plain http (dev and test only).
+  const { BACKEND_TLS_CERT: cert, BACKEND_TLS_KEY: key, BACKEND_TLS_CA: ca } = config;
+  const tls = cert && key && ca ? { cert: cert.reveal(), key: key.reveal(), ca: ca.reveal() } : undefined;
+  const accounts = createBackendAccounts({ url: config.BACKEND_URL, ...(tls ? { tls } : {}) });
   return { log, limiter, health, accounts };
 }
 

@@ -34,7 +34,14 @@ the process with exit code 78 and names the setting, never its value.
 | `HTTP_BODY_LIMIT_BYTES` | no | The default body limit. Default 65536. |
 | `RATE_LIMIT_MAX_KEYS` | no | Rate-limit buckets held at once. Default 100000. |
 | `SEARCH_LISTING` | no | `off` (the default) puts `noindex` on every response. |
-| `BACKEND_URL` | yes | Backend's internal API as an origin, such as `http://backend:3000`, reached on the private network only. The browser never calls it. |
+| `BACKEND_URL` | yes | Backend's internal API as an origin, reached on the private network only. The browser never calls it. Outside `dev` and `test` it must be `https:`, and web shows its client certificate (mutual TLS); plain `http:`, such as `http://backend:3000`, is allowed only in `dev` and `test`. |
+| `BACKEND_TLS_CERT_FILE` | with `https:` | A file holding web's client certificate (PEM), `web.crt`. |
+| `BACKEND_TLS_KEY_FILE` | with `https:` | A file holding that certificate's private key (PEM), `web.key`. |
+| `BACKEND_TLS_CA_FILE` | with `https:` | A file holding the CA that signed backend's certificate (PEM), `server-ca.crt`. Web trusts only this CA for backend. |
+
+The three certificate files come from `unset-sh/deployment`'s `scripts/internal-tls.sh`, which Alex runs once per
+environment; its runbook (`docs/site/internal-tls.md` there) says where each file goes and how to renew it. Staging
+and production each have their own certificates. All three are set or none is: a partial set refuses to start.
 
 ## What every request gets
 
