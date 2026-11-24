@@ -41,12 +41,12 @@ map with `npm run map`, and update this section in the same piece of work.
 
 ```sh
 bun install --frozen-lockfile --ignore-scripts
-bun run check   # svelte-check on TypeScript 7 (--tsgo), Biome, Vitest under Bun, vite build
+bun run check   # svelte-check on TypeScript 7 (--tsgo), Biome, vite build, then Vitest under Bun
 bun run dev     # Vite's dev server
-bun run start   # serve build/ with Bun
+bun run start   # bun server.ts: serve build/ (settings in docs/site/running.md)
 ```
 
 Bun is the runtime (`.bun-version`, `bunfig.toml`, `bun.lock`; 7-day release age, no lifecycle scripts). Tests run
 with `bunx --bun vitest`. `typescript` stays on 6 because SvelteKit and svelte-check load its compiler API; the
-checker is TypeScript 7 as `@typescript/native` (`scripts/typescript.test.ts`). CI runs tooling's Bun check and
-`pr-policy`. The agent-kit copy is not installed yet.
+checker is TypeScript 7 as `@typescript/native` (`scripts/typescript.test.ts`). Gate tests (`src/gate.test.ts`) run
+against the build. CI runs tooling's Bun check and `pr-policy`. The agent-kit copy is not installed yet.
