@@ -1,7 +1,7 @@
 // The Content-Security-Policy of each page group (ADR 0054 decision 4). The `app` group's header is SvelteKit's own
 // (kit.csp in vite.config.ts), which adds the hash of its startup script at each build; kit's config is fixed at build
-// time and names 'self', so `narrowed` replaces 'self' in script-src, style-src and font-src with the path sources
-// files are served from (`/_app/` for the build, `/fonts/` for our fonts). The groups that run no script get fixed
+// time and names 'self', so `narrowed` replaces 'self' in script-src, style-src and font-src with the path the files
+// are served from: `/_app/`, brand's fonts included, since Vite emits them there. The groups that run no script get fixed
 // headers built from the origin here. This file is the web's only CSP source: server.ts sends STATIC_CSP on every
 // response, and the hook replaces it on a page with its group's.
 import type { PageGroup } from "./policy.ts";
@@ -13,9 +13,8 @@ export const STATIC_CSP = "default-src 'none'; frame-ancestors 'none'";
 /** The header for the groups that run no script, by group. `app` is SvelteKit's own; this is its fallback. */
 export function zeroScriptCsp(origin: string): Readonly<Record<PageGroup, string>> {
   const build = `${origin}/_app/`;
-  const fonts = `${origin}/fonts/`;
   return Object.freeze({
-    public: `default-src 'none'; img-src ${build}; style-src ${build}; font-src ${fonts}; ${LOCKED}; object-src 'none'; manifest-src 'self'`,
+    public: `default-src 'none'; img-src ${build}; style-src ${build}; font-src ${build}; ${LOCKED}; object-src 'none'; manifest-src 'self'`,
     static: STATIC_CSP,
     app: STATIC_CSP,
   });
@@ -24,7 +23,7 @@ export function zeroScriptCsp(origin: string): Readonly<Record<PageGroup, string
 const FILE_DIRECTIVES: Readonly<Record<string, string>> = {
   "script-src": "/_app/",
   "style-src": "/_app/",
-  "font-src": "/fonts/",
+  "font-src": "/_app/",
 };
 
 /** SvelteKit's header with 'self' in the file directives replaced by `${origin}<path>`; every other source kept. */

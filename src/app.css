@@ -1,0 +1,26 @@
+/* brand 0.1.1's README order for Tailwind v4 and shadcn-svelte. The dark variant follows data-theme, as shadcn.css's
+   dark: classes need. No colour or font is written here: every value is brand's. */
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "@unset-sh/brand/tokens.css";
+@import "@unset-sh/brand/shadcn.css";
+@import "@unset-sh/brand/tailwind.css";
+@import "@unset-sh/brand/recipes.css";
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
+html {
+  background: var(--ground);
+  color: var(--ink);
+}
+
+body {
+  font-family: var(--font-sans);
+}
+
+a {
+  color: var(--link);
+}
+
+a:visited {
+  color: var(--link-visited);
+}

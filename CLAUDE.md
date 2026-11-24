@@ -49,4 +49,8 @@ bun run start   # bun server.ts: serve build/ (settings in docs/site/running.md)
 Bun is the runtime (`.bun-version`, `bunfig.toml`, `bun.lock`; 7-day release age, no lifecycle scripts). Tests run
 with `bunx --bun vitest`. `typescript` stays on 6 because SvelteKit and svelte-check load its compiler API; the
 checker is TypeScript 7 as `@typescript/native` (`scripts/typescript.test.ts`). Gate tests (`src/gate.test.ts`) run
-against the build. CI runs tooling's Bun check and `pr-policy`. The agent-kit copy is not installed yet.
+against the build.
+
+UI components are shadcn-svelte's, copied from `@unset-sh/brand`'s pinned gallery and styled only by brand's CSS
+(`src/app.css`). `src/lib/components/ui/source.json` pins each file; never edit one there. To add one, copy it from the
+brand tag the package is on, with the import rewrite `components.json` gives the shadcn-svelte CLI, and record it. CI runs tooling's Bun check and `pr-policy`. The agent-kit copy is not installed yet.
