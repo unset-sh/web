@@ -10,7 +10,7 @@ This is `unset-sh/web`: Unset's complete SvelteKit web application and device-si
   (`unset-sh/backend`); environment topology (`unset-sh/deployment`); canonical brand values (`unset-sh/brand`),
   protocol schemas (`unset-sh/lexicons`) or shared automation (`unset-sh/tooling`).
 - **Uses:** planned supported backend APIs and pinned brand/lexicon artifacts, tooling and agent-kit; rendering
-  where its rendering responsibility is needed. No dependencies are installed yet. **Used by:** web users and
+  where its rendering responsibility is needed. **Used by:** web users and
   deployment's artifact selection.
 - **Licence:** AGPL-3.0-only first-party work; no outside code contributions for now. Third-party licences remain.
 
@@ -39,5 +39,14 @@ map with `npm run map`, and update this section in the same piece of work.
 
 ## Commands
 
-No package manifest, application commands, check commands, CI or agent-kit copy exists yet. Add real commands
-and checks with the first implementation; there is no bootstrap application to install or run.
+```sh
+bun install --frozen-lockfile --ignore-scripts
+bun run check   # svelte-check on TypeScript 7 (--tsgo), Biome, Vitest under Bun, vite build
+bun run dev     # Vite's dev server
+bun run start   # serve build/ with Bun
+```
+
+Bun is the runtime (`.bun-version`, `bunfig.toml`, `bun.lock`; 7-day release age, no lifecycle scripts). Tests run
+with `bunx --bun vitest`. `typescript` stays on 6 because SvelteKit and svelte-check load its compiler API; the
+checker is TypeScript 7 as `@typescript/native` (`scripts/typescript.test.ts`). CI runs tooling's Bun check and
+`pr-policy`. The agent-kit copy is not installed yet.

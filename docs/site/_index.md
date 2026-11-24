@@ -14,8 +14,9 @@ params:
 `unset-sh/web` will hold the complete unset.sh SvelteKit application: routes, server rendering, layouts, feature
 screens, navigation, client state, web sessions and the web image build.
 
-**Status: repository foundation only.** No application, dependencies, build, checks or image exist here yet. The
-application moves in from [Undefined6799/unset](https://github.com/Undefined6799/unset) later.
+**Status: foundation.** A SvelteKit 3 application on Bun with its checks and a health route. Screens, sign-in and
+the image arrive step by step, reusing code from [Undefined6799/unset](https://github.com/Undefined6799/unset),
+which stays read-only.
 
 ## What belongs here
 
