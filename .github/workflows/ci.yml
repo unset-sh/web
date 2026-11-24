@@ -1,0 +1,23 @@
+name: ci
+
+on:
+  pull_request:
+    branches: [staging, main]
+  push:
+    branches: [staging, main]
+
+permissions: {}
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    # tooling main after unset-sh/tooling#33 (installs get the package token as GITHUB_PACKAGES_TOKEN).
+    uses: unset-sh/tooling/.github/workflows/ci-check.yml@cbc0732281b48db638da554fe163d156e64f9066
+    permissions:
+      contents: read
+      packages: read # the shared workflow's install step asks for it; no @unset-sh package is installed yet
+    with:
+      install: true
