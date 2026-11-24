@@ -1,5 +1,5 @@
 // English text for each public error code, until the i18n slice turns this into the EN/FR catalogs (P1.19).
-import type { ERROR_CODES } from "./catalog.ts";
+import { ERROR_CODES, type ErrorCode } from "./catalog.ts";
 
 type PublicCode = {
   [C in keyof typeof ERROR_CODES]: (typeof ERROR_CODES)[C]["public"] extends true ? C : never;
@@ -37,3 +37,7 @@ export const ERROR_MESSAGES: Record<PublicCode, string> = {
   "profile.conflict": "Your profile changed somewhere else since you opened it. Reload to see it, then save again.",
   "profile.pds_unavailable": "Your sign-in server is not answering, so your profile was not saved. Try again.",
 };
+
+/** What a page says for `code`; a code no page may show reads as the generic failure. */
+export const messageOf = (code: ErrorCode): string =>
+  ERROR_CODES[code].public ? ERROR_MESSAGES[code as PublicCode] : ERROR_MESSAGES["internal.error"];
