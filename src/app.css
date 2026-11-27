@@ -6,11 +6,24 @@
 @import "@unset-sh/brand/shadcn.css";
 @import "@unset-sh/brand/tailwind.css";
 @import "@unset-sh/brand/recipes.css";
-@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+@custom-variant dark {
+  &:where([data-theme="dark"], [data-theme="dark"] *) {
+    @slot;
+  }
+  @media (prefers-color-scheme: dark) {
+    &:where(:root:not([data-theme]), :root:not([data-theme]) *) {
+      @slot;
+    }
+  }
+}
+
+/* @brand-system-theme */
 
 html {
   background: var(--ground);
   color: var(--ink);
+  font-synthesis: none;
+  scroll-padding-top: 2rem;
 }
 
 body {

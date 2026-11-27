@@ -170,8 +170,20 @@ export const handle: Handle = async (input) => {
     services().log.logError(error);
     response = caughtResponse(error);
   }
-  const group = policyOf(event.route.id)?.group ?? "static";
+  const policy = policyOf(event.route.id);
+  const group = policy?.group ?? "static";
   const refused = REFUSALS.get(response);
+  // Both route and loaded content opt in. A failure, data request or unlisted route always stays out of search.
+  response = new Response(response.body, response);
+  const searchable =
+    config.SEARCH_LISTING === "on" &&
+    policy?.search === true &&
+    event.locals.searchVisible === true &&
+    !event.isDataRequest &&
+    response.status === 200 &&
+    response.headers.get("content-type")?.startsWith("text/html") === true;
+  response.headers.set("x-robots-tag", searchable ? "index, follow, max-image-preview:large" : "noindex");
+  note.searchVisible = searchable;
   if (refused !== undefined && wantsPage(event.request, event.isDataRequest)) {
     const styled = group === "app" || group === "public";
     response = refusalPage(refused, response.status, response.headers, styled ? stylesheet() : undefined);

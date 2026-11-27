@@ -33,7 +33,7 @@ the process with exit code 78 and names the setting, never its value.
 | `SHUTDOWN_GRACE_MS` | no | How long requests in flight may finish after SIGTERM. Default 10000. |
 | `HTTP_BODY_LIMIT_BYTES` | no | The default body limit. Default 65536. |
 | `RATE_LIMIT_MAX_KEYS` | no | Rate-limit buckets held at once. Default 100000. |
-| `SEARCH_LISTING` | no | `off` (the default) puts `noindex` on every response. |
+| `SEARCH_LISTING` | no | `off` (the default) puts `noindex` on every response and blocks crawling. `on` permits only explicitly eligible public pages and the default brand sharing image. |
 | `BACKEND_URL` | yes | Backend's internal API as an origin, reached on the private network only. The browser never calls it. Outside `dev` and `test` it must be `https:`, and web shows its client certificate (mutual TLS); plain `http:`, such as `http://backend:3000`, is allowed only in `dev` and `test`. |
 | `BACKEND_TLS_CERT_FILE` | with `https:` | A file holding web's client certificate (PEM), `web.crt`. |
 | `BACKEND_TLS_KEY_FILE` | with `https:` | A file holding that certificate's private key (PEM), `web.key`. |
@@ -59,6 +59,25 @@ and production each have their own certificates. All three are set or none is: a
 
 Each route folder has a `policy.ts` beside its page or endpoint. It names the route's group, rate limit and body
 limit. A route without one is refused.
+
+## Search and sharing
+
+The homepage's title, description, canonical URL, sharing tags and WebSite structured data are present in its
+initial HTML. The canonical origin comes from `PUBLIC_ORIGIN`, never a request header or query parameter.
+`/sharing/unset.png` is the standard 1200 × 630 Unset card when there is no specialised image.
+
+With `SEARCH_LISTING=off`, `/robots.txt` disallows crawling and `/sitemap.xml` contains no entries. With it `on`,
+robots permits crawling so search engines can read each page's indexing instructions; the sitemap lists only
+eligible public pages, currently the homepage. Sign-in, account, data, health, redirects and error responses stay
+`noindex` independently of this setting. Authentication still controls access to account data.
+
+Changing the setting requires restarting the process. It does not publish new routes, approve a launch or
+guarantee a search result. To inspect a configured instance, request `/`, `/robots.txt`, `/sitemap.xml` and
+`/sharing/unset.png`, and compare their HTML/headers with the expected setting. `bun run check` exercises both
+modes against the built server. If removing previously indexed pages, allow crawlers to read `noindex` or use the
+search engine's removal procedure; a crawl block alone does not remove existing results.
+
+See [Adding public page metadata](seo.md) for the route and content requirements.
 
 `/health` answers 200 with the service and commit while the server runs, and 503 once it is draining. SIGTERM stops
 new connections, lets requests in flight finish within the grace period, and exits 0.

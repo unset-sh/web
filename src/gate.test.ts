@@ -139,7 +139,7 @@ describe("hosts and headers", () => {
 
 describe("csp", () => {
   test("a_page_that_runs_no_script_allows_none_and_ships_none", async () => {
-    const answer = await call("/");
+    const answer = await call("/signed-out");
     expect(answer.status).toBe(200);
     const csp = String(answer.headers["content-security-policy"]);
     expect(csp).toContain("default-src 'none'");
@@ -154,15 +154,17 @@ describe("csp", () => {
     expect(csp).toContain(`font-src ${ORIGIN}/_app/`);
     const sheets = [...answer.body.matchAll(/<link href="([^"]+)" rel="stylesheet">/g)].map((m) => m[1]);
     expect(sheets.length).toBeGreaterThan(0);
+    const fonts: (string | undefined)[] = [];
     for (const sheet of sheets) {
       expect(sheet).toMatch(/^\/?(\.\/)?_app\/immutable\/assets\/[\w.-]+\.css$/);
       const css = await call(`/${String(sheet).replace(/^\.?\//, "")}`);
       expect(css.status).toBe(200);
       // Relative to the sheet, so under /_app/immutable/assets/ too.
-      const fonts = [...css.body.matchAll(/url\(([^)]+)\)/g)].map((m) => m[1]);
-      expect(fonts.length).toBeGreaterThan(0);
-      for (const font of fonts) expect(font).toMatch(/^\.\/[\w.-]+\.woff2$/);
+      fonts.push(...[...css.body.matchAll(/url\(([^)]+)\)/g)].map((m) => m[1]));
     }
+    // Route-specific sheets need no fonts of their own; the shared brand sheet supplies them.
+    expect(fonts.length).toBeGreaterThan(0);
+    for (const font of fonts) expect(font).toMatch(/^\.\/[\w.-]+\.woff2$/);
   });
 
   test("a_file_gets_the_static_policy", async () => {

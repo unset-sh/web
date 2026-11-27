@@ -6,7 +6,12 @@ import type { WebConfig } from "./config.ts";
 import type { CloseHook } from "./http/index.ts";
 
 /** Per request: the route the hook matched and the request id, for server.ts's log line. */
-export type RequestNote = { route?: string; reqId: string };
+export type RequestNote = {
+  route?: string;
+  reqId: string;
+  /** The page decision, retained when Kit filters its headers on a conditional response. */
+  searchVisible?: boolean;
+};
 
 /** What the SvelteKit side registers for shutdown: `draining` runs first (health answers 503), `close` after drain. */
 export type Shutdown = { readonly draining: (() => void)[]; readonly close: CloseHook[] };

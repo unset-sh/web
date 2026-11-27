@@ -6,6 +6,7 @@
 !tsconfig.json
 !vite.config.ts
 !server.ts
+!scripts/system-theme.ts
 !static/
 !src/
 src/**/*.test.ts

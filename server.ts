@@ -16,6 +16,7 @@ import { STATIC_CSP } from "./src/lib/server/csp.ts";
 import { drain, exitOnSignals, hostAllowed, SECURITY_HEADERS } from "./src/lib/server/http/index.ts";
 import { createLogger, type LogFields } from "./src/lib/server/log/index.ts";
 import { NOTE_KEY, type ProcessNote, type RequestNote } from "./src/lib/server/note.ts";
+import { DEFAULT_SHARE_IMAGE_PATH } from "./src/lib/server/seo.ts";
 
 const config = bootOrExit(schema);
 const log = createLogger({ service: "web", commit: config.UNSET_COMMIT, env: config.UNSET_ENV });
@@ -83,14 +84,14 @@ const { handler } = await import("#kit/handler").catch((error: unknown): never =
 note.stylesheet = await buildStylesheet();
 
 /**
- * Every response carries these; the app replaces the CSP on its pages (hooks.server.ts). With Search and AI listing off
- * on the whole site (SEARCH_LISTING) every response, files and refusals included, also says noindex; a page
- * that sets its own X-Robots-Tag sets the same value.
+ * Every response starts noindex. Only a successful public page explicitly approved by hooks.server.ts may replace
+ * it when SEARCH_LISTING is on. The fixed brand image has a separate explicit opt-in below; other files, redirects
+ * and refusals that bypass the hook remain excluded.
  */
 const BASE_HEADERS = {
   "content-security-policy": STATIC_CSP,
   ...SECURITY_HEADERS,
-  ...(config.SEARCH_LISTING === "on" ? {} : { "x-robots-tag": "noindex" }),
+  "x-robots-tag": "noindex",
 };
 
 const METHODS: readonly NonNullable<LogFields["method"]>[] = [
@@ -139,10 +140,18 @@ function hideFramework(res: ServerResponse): void {
  * response (RFC 9111 §4.3.4), so the page would then run under the static CSP and its stylesheet and fonts be blocked.
  * With none on the 304, the stored 200's CSP stays.
  */
-function keepStoredCsp(res: ServerResponse): void {
+function keepStoredCsp(res: ServerResponse, request: RequestNote): void {
   const writeHead = res.writeHead.bind(res) as (...args: unknown[]) => ServerResponse;
   res.writeHead = ((status: number, ...rest: unknown[]) => {
-    if (status === 304) res.removeHeader("content-security-policy");
+    if (status >= 300 && status !== 304) res.setHeader("x-robots-tag", "noindex");
+    if (status === 304) {
+      res.removeHeader("content-security-policy");
+      // Kit filters page headers on 304. Send the current indexing decision so a launch-setting change takes
+      // effect even when the body/ETag is unchanged. The static brand image already has its current policy.
+      if (config.SEARCH_LISTING === "on" && request.searchVisible === true) {
+        res.setHeader("x-robots-tag", "index, follow, max-image-preview:large");
+      }
+    }
     return writeHead(status, ...rest);
   }) as ServerResponse["writeHead"];
 }
@@ -165,9 +174,18 @@ function serve(req: IncomingMessage, res: ServerResponse): void {
     });
   });
   for (const [name, value] of Object.entries(BASE_HEADERS)) res.setHeader(name, value);
+  // This fixed identity asset contains no member data. Other files remain excluded by default. Errors below
+  // reset this permission in writeHead; a missing file or hostile Host must never become an indexable response.
+  if (
+    config.SEARCH_LISTING === "on" &&
+    pathOf(req) === DEFAULT_SHARE_IMAGE_PATH &&
+    (req.method === "GET" || req.method === "HEAD")
+  ) {
+    res.setHeader("x-robots-tag", "index, follow, max-image-preview:large");
+  }
   if (isDataAddress(req)) res.setHeader("x-robots-tag", "noindex");
   hideFramework(res);
-  keepStoredCsp(res);
+  keepStoredCsp(res, request);
   if (!isProbe(req)) {
     const host = hostOf(req);
     if (host === undefined || !hostAllowed(host, config.HTTP_ALLOWED_HOSTS)) {
