@@ -70,6 +70,12 @@ describe("the build context", () => {
     for (const file of ["src/gate.test.ts", "src/lib/server/config.test.ts"]) expect(included(file)).toBe(false);
   });
 
+  test("includes_the_theme_transform_required_by_the_vite_build", () => {
+    expect(included("scripts/system-theme.ts")).toBe(true);
+    expect(included("scripts/sharing.test.ts")).toBe(false);
+    expect(instructions).toContain("COPY scripts/system-theme.ts /app/scripts/system-theme.ts");
+  });
+
   test("holds every file server.ts imports, and the runtime stage copies each", () => {
     const runtime = instructions.slice(
       instructions.lastIndexOf(instructions.filter((l) => /^FROM\s/i.test(l)).at(-1) as string),

@@ -11,6 +11,8 @@ export type PageGroup = "app" | "public" | "static";
 
 export type RoutePolicy = Readonly<{
   group: PageGroup;
+  /** A public page may opt in; its load must also confirm the content's search visibility. */
+  search?: true;
   /** The rate-limit policy (a key of limits.ts `policies`). */
   limit: PolicyName;
   /** The policy a POST counts against instead of `limit`, address and member buckets both (a page whose writes cost

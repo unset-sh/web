@@ -8,6 +8,7 @@ import adapter from "@sveltejs/adapter-node";
 import { sveltekit } from "@sveltejs/kit/vite";
 import tailwindcss from "@tailwindcss/vite";
 import { defineConfig } from "vite";
+import { systemTheme } from "./scripts/system-theme.ts";
 
 export default defineConfig({
   // Never inline an imported file as a data: URL (Vite 8 build.assetsInlineLimit, default 4096 bytes): no policy here
@@ -17,6 +18,7 @@ export default defineConfig({
   // conditions and fails, so the SSR build bundles it (agent-kit notes/web-ui-spike/README.md, step 2).
   ssr: { noExternal: ["tw-animate-css"] },
   plugins: [
+    systemTheme(),
     tailwindcss(),
     sveltekit({
       adapter: adapter(),

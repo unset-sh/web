@@ -12,6 +12,10 @@ This is `unset-sh/web`: Unset's complete SvelteKit web application and device-si
 - **Uses:** planned supported backend APIs and pinned brand/lexicon artifacts, tooling and agent-kit; rendering
   where its rendering responsibility is needed. **Used by:** web users and
   deployment's artifact selection.
+- **Public pages:** the branded homepage, server-rendered metadata, canonical URLs, robots and sitemap share an
+  explicit search policy. Brand 0.1.1 supplies styles and identity assets; the default sharing PNG is copied from
+  brand at the full commit recorded in `static/sharing/source.json` and checked by hash. Content-specific image
+  URLs can replace it; actual rendering package adoption awaits public content routes and its brand migration.
 - **Licence:** AGPL-3.0-only first-party work; no outside code contributions for now. Third-party licences remain.
 
 Read the [organisation map](https://github.com/unset-sh/.github/blob/main/MAP.md) before moving responsibility.

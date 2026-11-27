@@ -19,6 +19,7 @@ COPY package.json bun.lock bunfig.toml ./
 RUN --mount=type=secret,id=github_packages_token,env=GITHUB_PACKAGES_TOKEN,required=true \
   bun install --frozen-lockfile --ignore-scripts
 COPY tsconfig.json vite.config.ts server.ts ./
+COPY scripts/system-theme.ts /app/scripts/system-theme.ts
 COPY static /app/static
 COPY src /app/src
 RUN bun run build
@@ -34,6 +35,7 @@ COPY --from=build /app/build /app/build
 # The sources server.ts imports at run time; .dockerignore keeps the tests out.
 COPY src/lib/errors /app/src/lib/errors
 COPY src/lib/server /app/src/lib/server
+COPY src/lib/seo.ts /app/src/lib/seo.ts
 COPY src/routes /app/src/routes
 # The base runs as root; web does not need it.
 USER 65532:65532
